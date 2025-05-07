@@ -1,0 +1,16 @@
+eclipse.preferences.version=1
+encoding//src/main/java=UTF-8
+encoding//src/main/java/aprs/AprsWeatherPositGenerator.java=UTF-8
+encoding//src/main/java/aprs/CWOPUpdater.java=UTF-8
+encoding//src/main/java/aprs/WUndergroundUpdater.java=UTF-8
+encoding//src/main/java/bosch/BME280.java=UTF-8
+encoding//src/main/java/com/leelory/suncalc/SunCalc4JavaUtils.java=UTF-8
+encoding//src/main/java/coverage/CoverageTestComponent.java=UTF-8
+encoding//src/main/java/ecowitt/GW2000B.java=UTF-8
+encoding//src/main/java/meteorology/Meteorology.java=UTF-8
+encoding//src/main/java/radio/EmissionDesignator.java=UTF-8
+encoding//src/main/java/time/AstronomicalTime.java=UTF-8
+encoding//src/main/resources=UTF-8
+encoding//src/test/java=UTF-8
+encoding//src/test/resources=UTF-8
+encoding/<project>=UTF-8
