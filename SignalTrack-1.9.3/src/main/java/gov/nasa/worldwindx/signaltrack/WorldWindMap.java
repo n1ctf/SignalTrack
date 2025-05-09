@@ -125,10 +125,11 @@ import utility.Vincenty;
 
 /**
  *
- * @author John
+ * @author modified by John
  */
 public class WorldWindMap extends AbstractMap {
-	private static final long serialVersionUID = 1423L;
+	private static final long serialVersionUID = 1423L; // This provides a unique catalog number for use by the configuration selector
+	
 	private static final double ZOOM_STEP = 0.8;
 	private static final double DEFAULT_ARC_INTERSECT_POINT_RADIUS = 3D;
 	private static final double DEFAULT_ARC_TRACE_RADIUS = 3D;
@@ -498,6 +499,8 @@ public class WorldWindMap extends AbstractMap {
 			System.setProperty("apple.awt.brushMetalLook", "true");
 		} else if (Configuration.isWindowsOS()) {
 			System.setProperty("sun.awt.noerasebackground", "true"); // prevents flashing during window resizing
+		} else if (Configuration.isLinuxOS()) {
+			// What about Linux, the best OS ever? This must be fixed right away, gentlemen!
 		}
 	}
 

@@ -7,16 +7,31 @@ import java.util.concurrent.TimeUnit;
 import baeldung.FifoFixedSizeQueue;
 import meteorology.MeasurementDataGroup;
 
+// TODO: Auto-generated Javadoc
+/**
+ * The Class RainRateTest.
+ */
 public class RainRateTest {
 
+	/** The scheduler. */
 	private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
+	
+	/** The period measurement queue. */
 	private FifoFixedSizeQueue<Long> periodMeasurementQueue = new FifoFixedSizeQueue<>(8); // Use 8 measurements to calculate the report rate
+	
+	/** The rainfall queue. */
 	private FifoFixedSizeQueue<MeasurementDataGroup> rainfallQueue = new FifoFixedSizeQueue<>(1440); // 24 hours of measurements every minute
 	
+	/**
+	 * Instantiates a new rain rate test.
+	 */
 	public RainRateTest() {
 		scheduler.scheduleAtFixedRate(this::clockUpdate, 0, 500, TimeUnit.MILLISECONDS);
 	}
 	
+	/**
+	 * Clock update.
+	 */
 	private void clockUpdate() {
 		updateRainfallQueue(3);
 		updatePeriodMeasurementQueue(System.currentTimeMillis());
@@ -30,6 +45,11 @@ public class RainRateTest {
 	// The sensor sample rate used by the WS90 calculator is not published.
 	// However, we require an actual rain amount that has occurred during each measurement period.
 	// This method converts the incoming report in millimeters/hour to millimeters of rain during the average period length
+	/**
+	 * Update rainfall queue.
+	 *
+	 * @param rainRateMillimetersPerHour the rain rate millimeters per hour
+	 */
 	// and pushes the value to the rainfall queue for later analysis.
 	private void updateRainfallQueue(double rainRateMillimetersPerHour) {
 		// An average report period is calculated as the data is received:
@@ -45,11 +65,21 @@ public class RainRateTest {
 		}
 	}
 	
+	/**
+	 * Update period measurement queue.
+	 *
+	 * @param millis the millis
+	 */
 	private void updatePeriodMeasurementQueue(long millis) {
 		System.out.println("Period Measurement Queue Size: " + periodMeasurementQueue.size());
 		periodMeasurementQueue.offer(millis);
 	}
 	
+	/**
+	 * Gets the average measurement report period millis.
+	 *
+	 * @return the average measurement report period millis
+	 */
 	private synchronized long getAverageMeasurementReportPeriodMillis() {
 		int n = periodMeasurementQueue.size();
 		Long[] millis = periodMeasurementQueue.toArray(new Long[n]);
@@ -67,6 +97,11 @@ public class RainRateTest {
 		return 0;
 	}
 	
+	/**
+	 * Gets the rainfall millimeters last 24 hours.
+	 *
+	 * @return the rainfall millimeters last 24 hours
+	 */
 	private double getRainfallMillimetersLast24Hours() {
 		
 		int n = findIndexAtZdtMinusMinutes(rainfallQueue, 1);
@@ -85,6 +120,13 @@ public class RainRateTest {
 	}
 	
 	// This method searches the entire measurement set and finds the first measurement that is so many 'minutes'
+	/**
+	 * Find index at zdt minus minutes.
+	 *
+	 * @param queue the queue
+	 * @param minutes the minutes
+	 * @return the int
+	 */
 	// back in time. This type of search is necessary because we can not be sure exactly when this measurement was reported.
 	private int findIndexAtZdtMinusMinutes(FifoFixedSizeQueue<MeasurementDataGroup> queue, long minutes) {
 		int n = 0;
@@ -113,6 +155,11 @@ public class RainRateTest {
 		return n;
 	}
 	
+	/**
+	 * The main method.
+	 *
+	 * @param args the arguments
+	 */
 	public static void main(final String[] args) {
 		EventQueue.invokeLater(() -> new RainRateTest());
 	}

@@ -46,8 +46,8 @@ public class CoverageTestObject {
     private static final String[] sinadValues = new String[31];
     private static final String[] berValues = new String[41];
 
-    private static HashMap<Double, Double> oneSidedArgumentOfUnitNormal = new HashMap<>(9);
-    private static HashMap<Double, Double> twoSidedArgumentOfUnitNormal = new HashMap<>(9);
+    private static final HashMap<Double, Double> oneSidedArgumentOfUnitNormal = HashMap.newHashMap(9);
+    private static final HashMap<Double, Double> twoSidedArgumentOfUnitNormal = HashMap.newHashMap(9);
     private static final Preferences userPrefs = Preferences.userRoot().node("jdrivetrack/prefs/CoverageTestSettings");
 
     private static final String[] tileSizeValues = new String[]{
@@ -74,6 +74,7 @@ public class CoverageTestObject {
         "120",
         "180"
     };
+    
     private String testName;
 
     private int id;

@@ -4,10 +4,10 @@ import java.util.Objects;
 
 public class FourDimElement<T1, T2, T3, T4> {
 
-    private transient T1 t1;
-    private transient T2 t2;
-    private transient T3 t3;
-    private transient T4 t4;
+    private T1 t1;
+    private T2 t2;
+    private T3 t3;
+    private T4 t4;
 
     public FourDimElement(T1 t1, T2 t2, T3 t3, T4 t4) {
         this.t1 = t1;
@@ -55,11 +55,13 @@ public class FourDimElement<T1, T2, T3, T4> {
 
 	@Override
 	public boolean equals(Object obj) {
-		if (this == obj)
+		if (this == obj) {
 			return true;
-		if (!(obj instanceof FourDimElement))
+		}
+		if (!(obj instanceof FourDimElement)) {
 			return false;
-		FourDimElement<?, ?, ?, ?> other = (FourDimElement<?, ?, ?, ?>) obj;
+		}
+		final FourDimElement<?, ?, ?, ?> other = (FourDimElement<?, ?, ?, ?>) obj;
 		return Objects.equals(t1, other.t1) && Objects.equals(t2, other.t2) && Objects.equals(t3, other.t3)
 				&& Objects.equals(t4, other.t4);
 	}

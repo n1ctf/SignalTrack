@@ -33,8 +33,6 @@ import java.util.Objects;
  * @author <a href="mailto:mike@gavaghan.org">Mike Gavaghan</a>
  */
 public class GeodeticMeasurement extends GeodeticCurve {
-	private static final long serialVersionUID = 1L;
-
 	/**
 	 * The elevation change, in meters, going from the starting to the ending point.
 	 */

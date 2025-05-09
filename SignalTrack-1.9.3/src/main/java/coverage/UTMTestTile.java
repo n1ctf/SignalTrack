@@ -1,12 +1,8 @@
 package coverage;
 
-import java.io.Serializable;
 import java.util.Objects;
 
-public class UTMTestTile implements Serializable {
-
-    private static final long serialVersionUID = -1L;
-    
+public class UTMTestTile {    
     private String zone;
     private int easting;
     private int northing;

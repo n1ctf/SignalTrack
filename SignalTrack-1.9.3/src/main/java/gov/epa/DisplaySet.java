@@ -1,11 +1,9 @@
 package gov.epa;
 
 import java.awt.Color;
-import java.io.Serializable;
 import java.util.Objects;
 
-public class DisplaySet implements Serializable {
-	private static final long serialVersionUID = 1L;
+public class DisplaySet {
 	
 	public static final Color DEFAULT_BACKGROUND_COLOR = Color.LIGHT_GRAY; 
 	public static final Color DEFAULT_FOREGROUND_COLOR = Color.BLACK;

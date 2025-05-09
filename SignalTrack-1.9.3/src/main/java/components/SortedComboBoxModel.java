@@ -8,9 +8,7 @@ import javax.swing.DefaultComboBoxModel;
 public class SortedComboBoxModel<E extends Comparable<? super E>> extends DefaultComboBoxModel<E> {
 	private static final long serialVersionUID = 1L;
 
-	public SortedComboBoxModel() {
-        super();
-     }
+	public SortedComboBoxModel() {}
 	
     public SortedComboBoxModel(E[] items) {
         Arrays.sort(items);

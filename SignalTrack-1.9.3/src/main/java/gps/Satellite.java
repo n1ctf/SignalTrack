@@ -4,7 +4,7 @@ package gps;
  *
  * @author John
  */
-public class Satellite {
+public class Satellite implements Cloneable {
 
     private String prn;
     private String elevation;
@@ -160,8 +160,8 @@ public class Satellite {
     }
 
     @Override
-	public Satellite clone() {
-        return new Satellite(this);
+    public Object clone() throws CloneNotSupportedException {
+      return super.clone();
     }
     
     

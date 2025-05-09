@@ -31,8 +31,15 @@ import java.util.logging.Logger;
 import org.jxmapviewer.viewer.TileCache;
 
 /**
- * 
+ *    This class was designed by John: 
+ *    What this is supposed to do is load all the map files saved to the HDD into memory.
+ *    It reads the file names and last modified date into an array, sorted by last used.
+ *    Then it loads them ordered by most recently used.
+ *    Not sure if it helps performance, or not?
+ *    I might need to put a limit on the number of files it tries to preload, 
+ *    and make it optional in the settings.
  */
+
 public class CachePreloader {
     private static final Logger LOG = Logger.getLogger(CachePreloader.class.getName());
 

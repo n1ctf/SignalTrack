@@ -1,6 +1,5 @@
 package gov.nasa.api.donki;
 
-
 public enum GeomagneticStorm {
 	G0,
 	G1,

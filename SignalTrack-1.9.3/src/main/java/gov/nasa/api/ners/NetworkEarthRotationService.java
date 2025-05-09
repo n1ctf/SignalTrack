@@ -379,10 +379,11 @@ public final class NetworkEarthRotationService implements AutoCloseable {
 			try {
 				LOG.log(Level.INFO, "Initializing NetworkEarthRotationService.queryScheduler service termination....");
 				queryScheduler.shutdown();
-				queryScheduler.awaitTermination(20, TimeUnit.SECONDS);
+				queryScheduler.awaitTermination(5, TimeUnit.SECONDS);
 				LOG.log(Level.INFO, "NetworkEarthRotationService.queryScheduler service has gracefully terminated");
 			} catch (InterruptedException e) {
-				LOG.log(Level.SEVERE, "NetworkEarthRotationService.queryScheduler service has timed out after 20 seconds of waiting to terminate processes.");
+				queryScheduler.shutdownNow();
+				LOG.log(Level.SEVERE, "NetworkEarthRotationService.queryScheduler service has timed out after 5 seconds of waiting to terminate processes.");
 				Thread.currentThread().interrupt();
 			}
 		}
@@ -391,10 +392,11 @@ public final class NetworkEarthRotationService implements AutoCloseable {
 			try {
 				LOG.log(Level.INFO, "Initializing NetworkEarthRotationService.updateScheduler service termination....");
 				updateScheduler.shutdown();
-				updateScheduler.awaitTermination(20, TimeUnit.SECONDS);
+				updateScheduler.awaitTermination(5, TimeUnit.SECONDS);
 				LOG.log(Level.INFO, "NetworkEarthRotationService.updateScheduler service has gracefully terminated");
 			} catch (InterruptedException e) {
-				LOG.log(Level.SEVERE, "NetworkEarthRotationService.updateScheduler service has timed out after 20 seconds of waiting to terminate processes.");
+				updateScheduler.shutdownNow();
+				LOG.log(Level.SEVERE, "NetworkEarthRotationService.updateScheduler service has timed out after 5 seconds of waiting to terminate processes.");
 				Thread.currentThread().interrupt();
 			}
 		}

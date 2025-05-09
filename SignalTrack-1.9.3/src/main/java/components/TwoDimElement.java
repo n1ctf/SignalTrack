@@ -4,8 +4,8 @@ import java.util.Objects;
 
 public class TwoDimElement<T1, T2> {
 
-    private transient T1 t1;
-    private transient T2 t2;
+    private T1 t1;
+    private T2 t2;
 
     public TwoDimElement(T1 t1, T2 t2) {
         this.t1 = t1;

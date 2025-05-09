@@ -9,17 +9,17 @@
 
 package org.jxmapviewer.viewer;
 
-
 /**
- * A Waypoint is a GeoPosition that can be 
- * drawn on a may using a WaypointPainter.
+ * A Waypoint is a GeoPosition that can be drawn on a may using a
+ * WaypointPainter.
+ * 
  * @author joshy
  */
-public interface Waypoint
-{
-    /**
-     * Get the current GeoPosition of this Waypoint
-     * @return the current position
-     */
-    public GeoPosition getPosition();
+public interface Waypoint {
+	/**
+	 * Get the current GeoPosition of this Waypoint
+	 * 
+	 * @return the current position
+	 */
+	GeoPosition getPosition();
 }

@@ -1,6 +1,5 @@
 package gov.nasa.api.donki;
 
-
 public enum SolarRadiationStorm {
 	S0, 
 	S1, 

@@ -23,7 +23,6 @@
  */
 package gavaghan.geodesy;
 
-import java.io.Serializable;
 import java.util.Objects;
 
 /**
@@ -33,9 +32,7 @@ import java.util.Objects;
  * 
  * @author <a href="mailto:mike@gavaghan.org">Mike Gavaghan</a>
  */
-public class GeodeticCurve implements Serializable {
-	private static final long serialVersionUID = 1L;
-
+public class GeodeticCurve {
 	/** Ellipsoidal distance (in meters). */
 	private final double mEllipsoidalDistance;
 

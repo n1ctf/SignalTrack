@@ -138,7 +138,8 @@ public abstract class AbstractGpsProcessor implements AutoCloseable {
 	private static final Logger LOG = Logger.getLogger(AbstractGpsProcessor.class.getName());
 
 	private static Locale currentLocale = DEFAULT_LOCALE;
-	private static boolean reverseGeoCodeLookupPending = false;
+	
+	private boolean reverseGeoCodeLookupPending = false;
 	
 	private final PropertyChangeSupport pcs = new PropertyChangeSupport(this);
 	
@@ -1061,7 +1062,13 @@ public abstract class AbstractGpsProcessor implements AutoCloseable {
 
 							final List<Satellite> svListTemp = new ArrayList<>();
 
-							getSvList().forEach(s -> svListTemp.add(s.clone()));
+							getSvList().forEach(s -> {
+								try {
+									svListTemp.add((Satellite) s.clone());
+								} catch (CloneNotSupportedException e) {
+									e.printStackTrace();
+								}
+							});
 
 							getSvList().clear();
 
@@ -1097,7 +1104,7 @@ public abstract class AbstractGpsProcessor implements AutoCloseable {
 								setGnssSystem(GnssSystem.GPS);
 							}
 
-						} catch (StringIndexOutOfBoundsException | ArrayIndexOutOfBoundsException
+						} catch (StringIndexOutOfBoundsException | ArrayIndexOutOfBoundsException  
 								| NumberFormatException ex) {
 							LOG.log(Level.WARNING, ex.getMessage(), ex);
 						}

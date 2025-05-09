@@ -549,7 +549,7 @@ public class Database implements AutoCloseable {
 
     private final class RetrieveAllStaticTestRecords implements Runnable {
 
-    	final private StaticTestObject sto;
+    	private final StaticTestObject sto;
 
         private RetrieveAllStaticTestRecords(StaticTestObject sto) {
             this.sto = sto;
@@ -988,7 +988,7 @@ public class Database implements AutoCloseable {
 
     private final class RetrieveTestTileByLonLat implements Runnable {
 
-    	final private TestTile testTile;
+    	private final TestTile testTile;
 
         private RetrieveTestTileByLonLat(TestTile testTile) {
             this.testTile = testTile;
@@ -1387,7 +1387,7 @@ public class Database implements AutoCloseable {
                 int x = 0;
                 while (x < 10 && sqlState != null && !"XJ015".equals(sqlState)) {
                     try {
-                        Thread.sleep(25);
+                        TimeUnit.MILLISECONDS.sleep(25);
                     } catch (InterruptedException ex) {
                         LOG.log(Level.WARNING, "InterruptedException", ex);
                         Thread.currentThread().interrupt();

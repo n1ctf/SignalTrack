@@ -92,7 +92,7 @@ public class DHT {
 		Gpio.digitalWrite(pin, Gpio.LOW);
 		Gpio.delay(REQUEST_DWELL);
 
-		// get ready to recieve data back from dht11
+		// get ready to receive data back from dht11
 		Gpio.pinMode(pin, Gpio.INPUT);
 		Gpio.pullUpDnControl(pin, Gpio.PUD_UP); // activate internal pullup
 

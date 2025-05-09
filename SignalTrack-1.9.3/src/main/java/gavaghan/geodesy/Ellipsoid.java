@@ -23,7 +23,6 @@
  */
 package gavaghan.geodesy;
 
-import java.io.Serializable;
 import java.util.Objects;
 
 /**
@@ -32,9 +31,7 @@ import java.util.Objects;
  * 
  * @author <a href="mailto:mike@gavaghan.org">Mike Gavaghan</a>
  */
-public class Ellipsoid implements Serializable {
-	private static final long serialVersionUID = 1L;
-
+public class Ellipsoid {
 	/** Semi major axis (meters). */
 	private final double mSemiMajorAxis;
 

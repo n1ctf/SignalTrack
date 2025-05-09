@@ -87,13 +87,13 @@ public class CompoundPainter<T> extends AbstractPainter<T> {
 		 */
 		@Override
 		public void propertyChange(PropertyChangeEvent evt) {
-			CompoundPainter<?> painter = ref.get();
+			final CompoundPainter<?> painter = ref.get();
 
 			if (painter == null) {
-				AbstractPainter<?> src = (AbstractPainter<?>) evt.getSource();
+				final AbstractPainter<?> src = (AbstractPainter<?>) evt.getSource();
 				src.removePropertyChangeListener(this);
 			} else {
-				String property = evt.getPropertyName();
+				final String property = evt.getPropertyName();
 
 				if ("dirty".equals(property) && evt.getNewValue().equals(Boolean.FALSE)) {
 					return;
@@ -153,22 +153,14 @@ public class CompoundPainter<T> extends AbstractPainter<T> {
 	 * @param painters array of painters, which will be painted in order
 	 */
 	public void setPainters(List<? extends Painter<T>> painters) {
-		Collection<Painter<T>> old = new ArrayList<>(getPainters());
+		final Collection<Painter<T>> old = new ArrayList<>(getPainters());
 
-		for (Painter<T> p : old) {
-			if (p instanceof AbstractPainter) {
-				((AbstractPainter<?>) p).removePropertyChangeListener(handler);
-			}
-		}
+		old.stream().filter(AbstractPainter.class::isInstance).forEach(p -> ((AbstractPainter<?>) p).removePropertyChangeListener(handler));
 
 		this.painters.clear();
 		this.painters.addAll(painters);
 
-		for (Painter<T> p : this.painters) {
-			if (p instanceof AbstractPainter) {
-				((AbstractPainter<?>) p).addPropertyChangeListener(handler);
-			}
-		}
+		this.painters.stream().filter(AbstractPainter.class::isInstance).forEach(p -> ((AbstractPainter<?>) p).addPropertyChangeListener(handler));
 
 		setDirty(true);
 		firePropertyChange("painters", old, getPainters());
@@ -184,12 +176,7 @@ public class CompoundPainter<T> extends AbstractPainter<T> {
 	 */
 	@SuppressWarnings("unchecked")
 	public void setPainters(Painter<T>... painters) {
-		List<? extends Painter<T>> l;
-
-		if (painters == null)
-			l = Collections.emptyList();
-		else
-			l = Arrays.asList(painters);
+		final List<? extends Painter<T>> l = painters == null ? Collections.emptyList() : Arrays.asList(painters);
 
 		setPainters(l);
 	}
@@ -200,7 +187,7 @@ public class CompoundPainter<T> extends AbstractPainter<T> {
 	 * @param painter the painter that is added
 	 */
 	public void addPainter(Painter<T> painter) {
-		Collection<Painter<T>> old = new ArrayList<>(getPainters());
+		final Collection<Painter<T>> old = new ArrayList<>(getPainters());
 
 		this.painters.add(painter);
 
@@ -218,7 +205,7 @@ public class CompoundPainter<T> extends AbstractPainter<T> {
 	 * @param painter the painter that is added
 	 */
 	public void removePainter(Painter<T> painter) {
-		Collection<Painter<T>> old = new ArrayList<>(getPainters());
+		final Collection<Painter<T>> old = new ArrayList<>(getPainters());
 
 		this.painters.remove(painter);
 
@@ -262,7 +249,7 @@ public class CompoundPainter<T> extends AbstractPainter<T> {
 	 * @see #isClipPreserved()
 	 */
 	public void setClipPreserved(boolean shouldRestoreState) {
-		boolean oldShouldRestoreState = isClipPreserved();
+		final boolean oldShouldRestoreState = isClipPreserved();
 		this.clipPreserved = shouldRestoreState;
 		setDirty(true);
 		firePropertyChange("clipPreserved", oldShouldRestoreState, shouldRestoreState);
@@ -285,7 +272,7 @@ public class CompoundPainter<T> extends AbstractPainter<T> {
 	 * @param transform a new AffineTransform
 	 */
 	public void setTransform(AffineTransform transform) {
-		AffineTransform old = getTransform();
+		final AffineTransform old = getTransform();
 		this.transform = transform;
 		setDirty(true);
 		firePropertyChange("transform", old, transform);
@@ -303,7 +290,7 @@ public class CompoundPainter<T> extends AbstractPainter<T> {
 		boolean dirty = false;
 		for (Painter<T> p : painters) {
 			if (p instanceof AbstractPainter) {
-				AbstractPainter<T> ap = (AbstractPainter<T>) p;
+				final AbstractPainter<T> ap = (AbstractPainter<T>) p;
 				ap.validate(object);
 				if (ap.isDirty()) {
 					dirty = true;
@@ -353,7 +340,7 @@ public class CompoundPainter<T> extends AbstractPainter<T> {
 	 * @see #isDirty()
 	 */
 	public void setCheckingDirtyChildPainters(boolean b) {
-		boolean old = isCheckingDirtyChildPainters();
+		final boolean old = isCheckingDirtyChildPainters();
 		this.checkForDirtyChildPainters = b;
 		firePropertyChange("checkingDirtyChildPainters", old, isCheckingDirtyChildPainters());
 	}
@@ -373,13 +360,13 @@ public class CompoundPainter<T> extends AbstractPainter<T> {
 	 */
 	@Override
 	protected boolean isDirty() {
-		boolean dirty = super.isDirty();
+		final boolean dirty = super.isDirty();
 		if (dirty) {
 			return true;
 		} else if (isCheckingDirtyChildPainters()) {
 			for (Painter<T> p : painters) {
 				if (p instanceof AbstractPainter) {
-					AbstractPainter<?> ap = (AbstractPainter<?>) p;
+					final AbstractPainter<?> ap = (AbstractPainter<?>) p;
 					if (ap.isDirty()) {
 						return true;
 					}
@@ -391,8 +378,8 @@ public class CompoundPainter<T> extends AbstractPainter<T> {
 
 	@Override
 	protected void setDirty(boolean d) {
-		boolean old = super.isDirty();
-		boolean ours = isDirty();
+		final boolean old = super.isDirty();
+		final boolean ours = isDirty();
 
 		super.setDirty(d);
 
@@ -417,12 +404,10 @@ public class CompoundPainter<T> extends AbstractPainter<T> {
 	@Override
 	public void clearCache() {
 		if (!clearLocalCacheOnly) {
-			for (Painter<T> p : painters) {
-				if (p instanceof AbstractPainter) {
-					AbstractPainter<?> ap = (AbstractPainter<?>) p;
-					ap.clearCache();
-				}
-			}
+			painters.stream().filter(AbstractPainter.class::isInstance).forEach(p -> {
+				final AbstractPainter<?> ap = (AbstractPainter<?>) p;
+				ap.clearCache();
+			});
 		}
 		super.clearCache();
 	}
@@ -438,8 +423,8 @@ public class CompoundPainter<T> extends AbstractPainter<T> {
 
 	@Override
 	protected void doPaint(Graphics2D g, T component, int width, int height) {
-		for (Painter<T> p : getPainters()) {
-			Graphics2D temp = (Graphics2D) g.create();
+		getPainters().forEach(p -> {
+			final Graphics2D temp = (Graphics2D) g.create();
 
 			try {
 				p.paint(temp, component, width, height);
@@ -449,13 +434,13 @@ public class CompoundPainter<T> extends AbstractPainter<T> {
 			} finally {
 				temp.dispose();
 			}
-		}
+		});
 	}
 
 	@Override
 	protected void configureGraphics(Graphics2D g) {
 		// applies the transform
-		AffineTransform tx = getTransform();
+		final AffineTransform tx = getTransform();
 		if (tx != null) {
 			g.setTransform(tx);
 		}

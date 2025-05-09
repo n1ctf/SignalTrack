@@ -36,7 +36,6 @@ package gavaghan.geodesy;
  * @author <a href="mailto:mike@gavaghan.org">Mike Gavaghan</a>
  */
 public class GlobalPosition extends GlobalCoordinates {
-	private static final long serialVersionUID = 1L;
 	/** Elevation, in meters, above the surface of the ellipsoid. */
 	private double mElevation;
 

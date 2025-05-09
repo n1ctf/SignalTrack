@@ -23,8 +23,6 @@
  */
 package gavaghan.geodesy;
 
-import java.io.Serializable;
-
 /**
  * <p>
  * Encapsulation of latitude and longitude coordinates on a globe. Negative
@@ -41,9 +39,7 @@ import java.io.Serializable;
  * 
  * @author <a href="mailto:mike@gavaghan.org">Mike Gavaghan</a>
  */
-public class GlobalCoordinates implements Comparable<GlobalCoordinates>, Serializable {
-	private static final long serialVersionUID = 1L;
-
+public class GlobalCoordinates implements Comparable<GlobalCoordinates> {
 	/** Latitude in degrees. Negative latitude is southern hemisphere. */
 	private double mLatitude;
 
