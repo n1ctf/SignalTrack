@@ -67,6 +67,7 @@ public abstract class AbstractMap extends JPanel implements AutoCloseable {
 	private final transient Preferences userPref = Preferences.userRoot().node(this.getClass().getName());
 
 	private final PropertyChangeSupport pcs = new PropertyChangeSupport(this);
+	
 	private boolean displayShapes;
 	private boolean showStatusBar;
 	

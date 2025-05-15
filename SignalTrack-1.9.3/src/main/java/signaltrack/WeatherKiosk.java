@@ -128,6 +128,7 @@ public class WeatherKiosk {
 		airNow = new AirNowAPI(consolidatedTime.getLatitudeDegrees(), consolidatedTime.getLongitudeDegrees(), true);
 		ners = new NetworkEarthRotationService();
 		swp = new NASASpaceWeatherProcessor(Style.SINGLE_COLUMN_NO_TIMEOUT_DISPLAY);
+		
 		eventPanel = new EventPanel();
 		
 		aes = AbstractEnvironmentSensor.getInstance(

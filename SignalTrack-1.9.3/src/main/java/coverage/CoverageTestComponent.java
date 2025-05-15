@@ -2464,7 +2464,7 @@ public class CoverageTestComponent extends JFrame {
             gridHeightMilesTextField.setText(heightFormat.format((Vincenty.degreesToMiles(cto.getGridHeightDegrees(), 0.0, cto.getGridTopDegrees()))));
         }
 
-        if ((isEqual(cto.getGridLeftDegrees(), -999)) && (!isEqual(cto.getGridRightDegrees(), -999))) {
+        if ((!isEqual(cto.getGridLeftDegrees(), -999)) && (!isEqual(cto.getGridRightDegrees(), -999))) {
             cto.setGridWidthDegrees(Math.abs(cto.getGridLeftDegrees() - cto.getGridRightDegrees()));
             gridWidthMilesTextField.setText(widthFormat.format((Vincenty.degreesToMiles(cto.getGridWidthDegrees(), 90.0, cto.getGridTopDegrees()))));
         }

@@ -137,7 +137,7 @@ public class Database implements AutoCloseable {
         private  final CoverageTestObject coverageTestSettings;
         private  final StaticTestObject staticTestSettings;
 
-        private OpenDatabase( File databaseFile,  String username,  String password,
+        private OpenDatabase(File databaseFile, String username, String password,
                 CoverageTestObject coverageTestSettings, StaticTestObject staticTestSettings) {
             this.coverageTestSettings = coverageTestSettings;
             this.staticTestSettings = staticTestSettings;
@@ -147,11 +147,10 @@ public class Database implements AutoCloseable {
             config.setDatabaseFile(databaseFile);
             dataSource.setUrl(config.getDatasourceURL());
         }
-
+        
         @Override
         public synchronized void run() {
-            try (Connection conn = dataSource.getConnection()) {
-            	
+            try (Connection conn = dataSource.getConnection() ) {
                 allMeasurementRecordsRetrieved = false;
                 allStaticRecordsRetrieved = false;
                 

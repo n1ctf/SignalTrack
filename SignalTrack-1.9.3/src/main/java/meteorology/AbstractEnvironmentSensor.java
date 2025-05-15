@@ -1423,10 +1423,11 @@ public abstract class AbstractEnvironmentSensor implements AutoCloseable {
 			try {
 				LOG.log(Level.INFO, "Initializing AbstractEnvironemntSensor.AnalyzeTemperatureTrends service termination....");
 				executor.shutdown();
-				executor.awaitTermination(20, TimeUnit.SECONDS);
+				executor.awaitTermination(3, TimeUnit.SECONDS);
 				LOG.log(Level.INFO, "AbstractEnvironemntSensor.AnalyzeTemperatureTrends service has gracefully terminated");
 			} catch (InterruptedException e) {
-				LOG.log(Level.SEVERE, "AbstractEnvironemntSensor.AnalyzeTemperatureTrends service has timed out after 20 seconds of waiting to terminate processes.");
+				executor.shutdownNow();
+				LOG.log(Level.SEVERE, "AbstractEnvironemntSensor.AnalyzeTemperatureTrends service has timed out after 3 seconds of waiting to terminate processes.");
 				Thread.currentThread().interrupt();
 			}
 		}
@@ -1544,7 +1545,7 @@ public abstract class AbstractEnvironmentSensor implements AutoCloseable {
 			if (!temperatureQueue.isEmpty() && temperatureQueue.size() > 1) {
 				final ZonedDateTime a = temperatureQueue.peek(0).getZdt();
 				final ZonedDateTime b = temperatureQueue.peek(temperatureQueue.size() - 1).getZdt();
-				hours = Math.abs(ChronoUnit.HOURS.between(a, b));
+				hours = Math.abs(ChronoUnit.HOURS.between(a, b)) + 1;
 			}
 			return hours;
 		}

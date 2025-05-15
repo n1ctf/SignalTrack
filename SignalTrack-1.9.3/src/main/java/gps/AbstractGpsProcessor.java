@@ -1377,10 +1377,11 @@ public abstract class AbstractGpsProcessor implements AutoCloseable {
 			try {
 				LOG.log(Level.INFO, "Initializing AbstractGpsProcessor.executor service termination....");
 				executor.shutdown();
-				executor.awaitTermination(20, TimeUnit.SECONDS);
+				executor.awaitTermination(5, TimeUnit.SECONDS);
 				LOG.log(Level.INFO, "AbstractGpsProcessor.executor service has gracefully terminated");
 			} catch (InterruptedException e) {
-				LOG.log(Level.SEVERE, "AbstractGpsProcessor.executor service has timed out after 20 seconds of waiting to terminate processes.");
+				executor.shutdownNow();
+				LOG.log(Level.SEVERE, "AbstractGpsProcessor.executor service has timed out after 5 seconds of waiting to terminate processes.");
 				Thread.currentThread().interrupt();
 			}
 		}

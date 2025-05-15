@@ -187,7 +187,6 @@ public class EnvironmentMonitorGUI extends JFrame {
 	private JLabel lblLunarAzimuth;
 
 	private JLabel lblCPM;
-	private JLabel lblCPMDecorated;
 	private JLabel lblGammaRad;
 	private JLabel lblGammaRadDecorated;
 	private JLabel lblBetaRad;
@@ -498,7 +497,7 @@ public class EnvironmentMonitorGUI extends JFrame {
 			}
 			if (AbstractEnvironmentSensor.Events.DATA_COMPLETE.name().equals(event.getPropertyName())) {
 				final ZonedDateTime zdt = (ZonedDateTime) event.getNewValue();
-				setHumidity(String.valueOf(aes.getExteriorHumidity()) + "%|" + AbstractEnvironmentSensor.toDecimalFormat(aes.getExteriorHumidityGM3(), 1) + "gm\u00B3");
+				setHumidity(String.valueOf(aes.getExteriorHumidity()) + "%");
 				setDewPoint(aes.getTempStringFromFahrenheit(aes.getDewPointFahrenheit(), 1));	
 				setBarometricPressureAbsolute(aes.getPressureStringFromHPa(aes.getBarometricPressureAbsoluteHPA(), 2));         
 				setBarometricPressureStation(aes.getPressureStringFromInchesHg(aes.getStationPressureInHg(), 2));
@@ -793,7 +792,6 @@ public class EnvironmentMonitorGUI extends JFrame {
 		setName("Local Environemnt Sensors");
 
 		lblCPM = new JLabel();
-		lblCPMDecorated = new JLabel();
 		lblGammaRad = new JLabel();
 		lblGammaRadDecorated = new JLabel();
 		lblBetaRad = new JLabel();
@@ -1445,10 +1443,10 @@ public class EnvironmentMonitorGUI extends JFrame {
 		invokeLaterInDispatchThreadIfNeeded(() -> {
 			if (cpm >= 0) {
 				this.lblCPM.setText(String.valueOf(cpm));
-				this.lblCPMDecorated.setText("|" + cpm + " cpm");
+				this.lblGammaRadDecorated.setToolTipText(cpm + " cpm");
 			} else {
 				this.lblCPM.setText("");
-				this.lblCPMDecorated.setText("");
+				this.lblGammaRadDecorated.setToolTipText("");
 			}
 		});
 	}
@@ -1490,7 +1488,10 @@ public class EnvironmentMonitorGUI extends JFrame {
 	}
 		
 	private void setHumidity(String text) {
-		invokeLaterInDispatchThreadIfNeeded(() -> this.lblHumidity.setText(text));
+		invokeLaterInDispatchThreadIfNeeded(() -> {		
+			this.lblHumidity.setText(text);
+			this.lblHumidity.setToolTipText(AbstractEnvironmentSensor.toDecimalFormat(aes.getExteriorHumidityGM3(), 1) + "gm\u00B3");
+		});
 	}
 	
 	private void setBarometricPressureAbsolute(String text) {
@@ -2117,8 +2118,7 @@ public class EnvironmentMonitorGUI extends JFrame {
 	
 	private JPanel getGammaRadiationPanelFoundation7InchDisplay() {
 		final JPanel panel = new JPanel();
-		
-		lblCPMDecorated.setFont(new Font(DEFAULT_FONT, Font.PLAIN, 9));
+
 		lblGammaRadDecorated.setFont(new Font(DEFAULT_FONT, Font.PLAIN, 9));
 
 		panel.setBorder(BorderFactory.createTitledBorder(null, "Radiation \u03B3", TitledBorder.DEFAULT_JUSTIFICATION,
@@ -2132,15 +2132,12 @@ public class EnvironmentMonitorGUI extends JFrame {
 			.addGroup(GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
 				.addGap(2, 2, 2)
 				.addComponent(lblGammaRadDecorated, 64, 64, 64)
-				.addComponent(lblCPMDecorated, 44, 44, 44)
 				.addGap(2, 2, 2)));
 
 		layout.setVerticalGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING)
 			.addGroup(GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
 				.addGap(1, 1, 1)
-				.addGroup(layout.createParallelGroup(GroupLayout.Alignment.CENTER)
-					.addComponent(lblGammaRadDecorated, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-					.addComponent(lblCPMDecorated, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE))
+				.addComponent(lblGammaRadDecorated, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
 				.addGap(1, 1, 1)));
 
 		return panel;
@@ -3405,9 +3402,9 @@ public class EnvironmentMonitorGUI extends JFrame {
 							.addComponent(jpnlAirQuality, 135, 135, Short.MAX_VALUE)
 							.addComponent(jpnlRSG, 135, 135, Short.MAX_VALUE)
 							.addGroup(layout.createSequentialGroup()
-								.addComponent(jpnlHumidity, 80, 80, 80)
+								.addComponent(jpnlHumidity, 90, 90, 90)
 								.addGap(1, 1, 1)
-								.addComponent(jpnlGammaRadiation, 100, 100, Short.MAX_VALUE))
+								.addComponent(jpnlGammaRadiation, 90, 90, Short.MAX_VALUE))
 							.addComponent(jpnlTemp, 135, 135, Short.MAX_VALUE)))
 					.addComponent(jpnlSolarRadiation, 360, 360, Short.MAX_VALUE)))
 			.addGap(2, 2, 2));

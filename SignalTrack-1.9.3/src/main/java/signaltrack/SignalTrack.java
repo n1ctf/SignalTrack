@@ -305,7 +305,6 @@ public class SignalTrack extends JFrame {
     private StaticTestComponent staticTestComponent;
     private GPSComponent gpsComponent;
     private APRSComponent aprsComponent;
-    private DatabaseConfigComponent databaseConfigComponent;
     private CPUUsageCollector cpuUsageCollector;
     private RadioComponent radioComponent;
     private PreviewPrintPanel previewPrintPanel;
@@ -543,6 +542,8 @@ public class SignalTrack extends JFrame {
             close();
         }
 
+        databaseConfig = new DatabaseConfig(isClearAllPrefs());
+        
         setOperationMode(operationMode);
 
         if (isShowCPULoad()) {
@@ -1019,7 +1020,6 @@ public class SignalTrack extends JFrame {
 
     private void initializeMeasurementObjects() {
         executor = Executors.newCachedThreadPool();
-        databaseConfig = new DatabaseConfig(isClearAllPrefs());
         signalAnalysis = new SignalAnalysis();
         abstractRadioReceiver = AbstractRadioReceiver.getRadioInstance(new File(startRadioCalFileName), isClearAllPrefs());
         coverageTestObject = new CoverageTestObject(isClearAllPrefs(), abstractRadioReceiver, testName);
@@ -1261,8 +1261,7 @@ public class SignalTrack extends JFrame {
                 setMapDragged(true);
                 mapCurrentCursor = abstractMap.getMouseDragCoordinates();
                 handleMouseDrag();
-                if (isTestGridSelectionMode() || isBulkDownloadSelectionMode() || isMeasureMode()
-                        || isTestGridLearnMode()) {
+                if (isTestGridSelectionMode() || isBulkDownloadSelectionMode() || isMeasureMode() || isTestGridLearnMode()) {
                     e.consume();
                 }
             }
@@ -2475,7 +2474,7 @@ public class SignalTrack extends JFrame {
         setDatabaseMode(DatabaseMode.OPEN);
         database.requestTileStatistics(coverageTestObject);
         if (newDatabaseMonitor != null) {
-            newDatabaseMonitor.exit();
+            newDatabaseMonitor.dispose();
         }
         if (isCoverageTestActive() && (database.getTileRecordList().isEmpty())) {
             invokeLaterInDispatchThreadIfNeeded(() -> {
@@ -2488,9 +2487,7 @@ public class SignalTrack extends JFrame {
     }
 
     private void databseConfigMenuActionListenerEvent() {
-        if (databaseConfigComponent != null) {
-            databaseConfigComponent = new DatabaseConfigComponent(database.getConfig());
-        }
+        new DatabaseConfigComponent(databaseConfig);
     }
 
     private void disableZoomIn(boolean disabled) {
@@ -4577,6 +4574,7 @@ public class SignalTrack extends JFrame {
         final String str = String.format(getLocale(), "Tile # %1d appended to database: %2s", total,
                 database.getConfig().getDatabaseFile().getName());
         LOG.log(Level.INFO, str);
+        System.out.println(str);
         testTile.setColor(getTestTileColor(0));
         abstractMap.addTestTile(testTile);
         abstractMap.setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
@@ -4647,6 +4645,7 @@ public class SignalTrack extends JFrame {
         setTestGridSelectionMode((boolean) event.getNewValue());
     }
 
+    // sets test grid boundaries
     private void setTestGridSelectionMode(boolean testGridSelectionMode) {
         this.testGridSelectionMode = testGridSelectionMode;
         if (testGridSelectionMode) {

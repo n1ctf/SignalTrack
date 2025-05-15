@@ -168,7 +168,7 @@ public class JXMapViewer extends JPanel implements DesignMode {
 			final int z = getZoom();
 			final Rectangle viewportBounds = getViewportBounds();
 			drawMapTiles(g, z, viewportBounds);
-			drawOverlays(z, g, viewportBounds);
+			drawOverlays(g);
 		}
 
 		super.paintBorder(g);
@@ -292,7 +292,7 @@ public class JXMapViewer extends JPanel implements DesignMode {
 	}
 
 	@SuppressWarnings("unused")
-	private void drawOverlays(final int zoom, final Graphics g, final Rectangle viewportBounds) {
+	private void drawOverlays(Graphics g) {
 		if (overlay != null) {
 			overlay.paint((Graphics2D) g, this, getWidth(), getHeight());
 		}
@@ -714,7 +714,7 @@ public class JXMapViewer extends JPanel implements DesignMode {
 	}
 
 	// a property change listener which forces repaints when tiles finish loading
-	private final transient TileListener tileLoadListener = new TileListener() {
+	private final TileListener tileLoadListener = new TileListener() {
 		@Override
 		public void tileLoaded(Tile tile) {
 			if (tile.getZoom() == getZoom()) {

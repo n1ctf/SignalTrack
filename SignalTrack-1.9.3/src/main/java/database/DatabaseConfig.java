@@ -85,18 +85,19 @@ public class DatabaseConfig {
 	}
 
 	public String getDatasourceURL() {
-		switch(driver) {
-			case 0: return "jdbc:mysql://" + inetAddress.getHostAddress() + ":" + port + 
+		return switch (driver) {
+			case 0 -> "jdbc:mysql://" + inetAddress.getHostAddress() + ":" + port + 
 					File.pathSeparator + databaseFile.getName().replace("\\", File.pathSeparator).replace(".sql",  "");
-			case 1: return "jdbc:derby:" + databaseFile.getPath() + ";create=true";
-			case 2: return "jdbc:oracle:oci:@" + inetAddress.getHostAddress() + 
+			case 1 -> "jdbc:derby:codejava/webdb1;create=true";
+					//"jdbc:derby:" + databaseFile.getPath() + ";create=true";
+			case 2 -> "jdbc:oracle:oci:@" + inetAddress.getHostAddress() + 
 					":" + port + ":" + databaseFile.getName().replace("\\", File.pathSeparator).replace(".sql",  "");
-			case 3: return "jdbc:oracle:thin:@" + inetAddress.getHostAddress() + 
+			case 3 -> "jdbc:oracle:thin:@" + inetAddress.getHostAddress() + 
 					":" + port + ":" + databaseFile.getName().replace("\\", File.pathSeparator).replace(".sql",  "");
-			case 4: return "jdbc:postgresql://" + inetAddress.getHostAddress() + ":" + port + 
+			case 4 -> "jdbc:postgresql://" + inetAddress.getHostAddress() + ":" + port + 
 					File.pathSeparator + databaseFile.getName().replace("\\", File.pathSeparator).replace(".sql",  "");
-			default: return null;
-		}
+			default -> null;
+		};
 	}
 
 	public String getDatasourceClassName() {
@@ -140,7 +141,7 @@ public class DatabaseConfig {
 	}
 	
     public static String getNewDatabaseName() {
-    	SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMddHHmmss");
+    	final SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMddHHmmss");
 		return sdf.format(Calendar.getInstance().getTime()) + ".sql";
     }
     

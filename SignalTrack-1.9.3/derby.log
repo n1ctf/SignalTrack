@@ -1,0 +1,13 @@
+----------------------------------------------------------------
+Tue May 13 23:11:22 EDT 2025:
+Booting Derby version The Apache Software Foundation - Apache Derby - 10.12.1.1 - (1704137): instance a816c00e-0196-ccc6-7b2e-00000fa52a50 
+on database directory C:\Users\n1ctf\Documents\workspace\git\SignalTrack\SignalTrack-1.9.3\codejava\webdb1 with class loader jdk.internal.loader.ClassLoaders$AppClassLoader@70dea4e 
+Loaded from file:/C:/Users/n1ctf/.m2/repository/org/apache/derby/derby/10.12.1.1/derby-10.12.1.1.jar
+java.vendor=Oracle Corporation
+java.runtime.version=23.0.2+7-58
+user.dir=C:\Users\n1ctf\Documents\workspace\git\SignalTrack\SignalTrack-1.9.3
+os.name=Windows 10
+os.arch=amd64
+os.version=10.0
+derby.system.home=null
+Database Class Loader started - derby.database.classpath=''

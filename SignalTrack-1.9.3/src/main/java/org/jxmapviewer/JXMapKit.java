@@ -34,6 +34,7 @@ import java.io.InputStream;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.ConcurrentModificationException;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -191,7 +192,7 @@ public class JXMapKit extends AbstractMap {
 	private transient Point2D gridSize;
 	private transient Point2D mouseLonLat = new Point2D.Double(-181, -181);
 	private transient Point2D mouseDragLonLat = new Point2D.Double(-181, -181);
-	private transient Point2D mouseRulerOrigin;
+	private transient Point2D mousePressOrigin;
 
 	private transient MapMarkerCircle targetRing;
 	private transient MapMarkerDot gpsDot;
@@ -351,8 +352,7 @@ public class JXMapKit extends AbstractMap {
 						}).forEachOrdered(arc -> paintMarkers(g2d, arc.getTraceMarkers()));
 					}
 
-					if (JXMapKit.this.showArcIntersectPoints && JXMapKit.this.arcIntersectList != null
-							&& isDisplayShapes()) {
+					if (JXMapKit.this.showArcIntersectPoints && JXMapKit.this.arcIntersectList != null && isDisplayShapes()) {
 						paintTriangles(g2d, JXMapKit.this.arcIntersectList);
 					}
 
@@ -378,6 +378,9 @@ public class JXMapKit extends AbstractMap {
 						JXMapKit.this.lineList.stream().filter(polyline -> (polyline.isVisible()))
 								.forEachOrdered(polyline -> paintPolyline(g2d, polyline));
 					}
+					
+				} catch (ConcurrentModificationException ex) {
+					LOG.log(Level.WARNING, ex.getLocalizedMessage(), ex);
 				} finally {
 					g2d.dispose();
 				}
@@ -445,7 +448,7 @@ public class JXMapKit extends AbstractMap {
 		rebuildMainMapOverlay();
 
 		mainMap.addMouseListener(new MouseListener() {
-
+			
 			@Override
 			public void mouseClicked(MouseEvent e) {
 				// NO OP
@@ -453,24 +456,25 @@ public class JXMapKit extends AbstractMap {
 
 			@Override
 			public void mousePressed(MouseEvent e) {
-				mouseRulerOrigin = JXMapKit.this.mainMap.convertPointToGeoPosition(e.getPoint()).getLonLat();
+				mousePressOrigin = JXMapKit.this.mainMap.convertPointToGeoPosition(e.getPoint()).getLonLat();
+				System.out.println("MousePressOrigin: " + mousePressOrigin);
 			}
-
+			
 			@Override
 			public void mouseReleased(MouseEvent e) {
 				// NO OP
 			}
-
+			
 			@Override
 			public void mouseEntered(MouseEvent e) {
 				// NO OP
 			}
-
+			
 			@Override
 			public void mouseExited(MouseEvent e) {
 				// NO OP
 			}
-
+			
 		});
 
 		mainMap.addMouseMotionListener(new MouseMotionListener() {
@@ -483,10 +487,10 @@ public class JXMapKit extends AbstractMap {
 			public void mouseDragged(MouseEvent e) {
 				JXMapKit.this.mouseDragLonLat = JXMapKit.this.mainMap.convertPointToGeoPosition(e.getPoint())
 						.getLonLat();
-				if (rulerMode && mouseRulerOrigin != null) {
-					setRulerEnds(mouseRulerOrigin, mouseDragLonLat);
+				if (rulerMode && mousePressOrigin != null) {
+					setRulerEnds(mousePressOrigin, mouseDragLonLat);
 					getPropertyChangeSupport().firePropertyChange(MapEvent.MEASURE_TOOL_SOLUTION.name(), null,
-							new SurfaceLine(mouseRulerOrigin, mouseDragLonLat));
+							new SurfaceLine(mousePressOrigin, mouseDragLonLat));
 				}
 			}
 		});
@@ -526,20 +530,20 @@ public class JXMapKit extends AbstractMap {
 		miniMap.setOverlayPainter((g, map, _, _) -> {
 			// get the viewport rectangle of the main map
 			final Rectangle mainMapBounds = mainMap.getViewportBounds();
-
+			
 			// convert to Point2Ds
 			Point2D upperLeft2D = mainMapBounds.getLocation();
 			Point2D lowerRight2D = new Point.Double(upperLeft2D.getX() + mainMapBounds.getWidth(),
 					upperLeft2D.getY() + mainMapBounds.getHeight());
-
+			
 			// convert to GeoPostions
 			final GeoPosition upperLeft = mainMap.getTileFactory().pixelToGeo(upperLeft2D, mainMap.getZoom());
 			final GeoPosition lowerRight = mainMap.getTileFactory().pixelToGeo(lowerRight2D, mainMap.getZoom());
-
+			
 			// convert to Point2Ds on the mini-map
 			upperLeft2D = map.getTileFactory().geoToPixel(upperLeft, map.getZoom());
 			lowerRight2D = map.getTileFactory().geoToPixel(lowerRight, map.getZoom());
-
+			
 			final Graphics2D g2d = (Graphics2D) g.create();
 			final Rectangle rect = map.getViewportBounds();
 			g2d.translate(-rect.getX(), -rect.getY());
@@ -558,24 +562,23 @@ public class JXMapKit extends AbstractMap {
 			iconScheduler.scheduleAtFixedRate(new IconSchedule(), 5, 5, TimeUnit.SECONDS);
 		
 		flashScheduler = Executors.newSingleThreadScheduledExecutor();
-			flashScheduler.scheduleAtFixedRate(new FlashScheduler(), 0, 250, TimeUnit.MILLISECONDS);
+		flashScheduler.scheduleAtFixedRate(new FlashScheduler(), 0, 250, TimeUnit.MILLISECONDS);
 
 		getPropertyChangeSupport().firePropertyChange(MapEvent.MAP_PAINTED.name(), null, true);
 	}
 
 	private class FlashScheduler implements Runnable {
-
 		@Override
 		public synchronized void run() {
 			testTileList.stream().filter(MapPolygonImpl::isFlash).forEach(m -> {
 				// Uses the color instance variable to remember what the original backColor was.
 				// The color variable is not used when painting the tile because text is not
-				// used.
-				final Color c = m.getStyle().getColor();
+				// used, so we can get away with using it to remember the Alpha value, in particular.
+				final Color fc = m.getStyle().getColor();
 				if (m.getStyle().getBackColor().getAlpha() > 0) {
-					m.getStyle().setBackColor(new Color(c.getRed(), c.getGreen(), c.getBlue(), 0));
+					m.getStyle().setBackColor(new Color(fc.getRed(), fc.getGreen(), fc.getBlue(), 0));
 				} else {
-					m.getStyle().setBackColor(new Color(c.getRed(), c.getGreen(), c.getBlue(), c.getAlpha()));
+					m.getStyle().setBackColor(new Color(fc.getRed(), fc.getGreen(), fc.getBlue(), fc.getAlpha()));
 				}
 			});
 			JXMapKit.this.mainMap.repaint();
@@ -1601,6 +1604,9 @@ public class JXMapKit extends AbstractMap {
 		quadList.get(index).setVisible(isVisible);
 	}
 
+	// This method takes a TestTile object and creates a MapPolygon.
+	// Then, it add the MapPolygon to a List of <MapPolygons> to be displayed on the JXMapKit.mainMap
+	// TODO: this is not placing the <MapPolygon> in the right location, and must be corrected.
 	@Override
 	public void addTestTile(TestTile testTile) {
 		final Style style = new Style(testTile.getColor(), testTile.getColor(), new BasicStroke(), null);
@@ -1610,6 +1616,7 @@ public class JXMapKit extends AbstractMap {
 		testTileList.add(tile);
 		LOG.log(Level.INFO, "Test tile ID: {0} added to map", testTile.getID());
 		mainMap.repaint();
+		System.out.println("Test tile ID: " + testTile.getID() + " added to map");
 	}
 
 	@Override
@@ -2310,11 +2317,9 @@ public class JXMapKit extends AbstractMap {
 
 		try {
 			if (testTiles) {
-
 				this.testTileList.stream().filter(testTile -> (testTile.isVisible()))
 						.forEachOrdered((MapPolygonImpl testTile) -> testTile.getPoints()
 								.forEach(c -> mapItems.add(new GeoPosition(c.getLonLat()))));
-
 			}
 		} catch (NullPointerException ex) {
 			LOG.log(Level.WARNING, ex.getMessage(), ex);
