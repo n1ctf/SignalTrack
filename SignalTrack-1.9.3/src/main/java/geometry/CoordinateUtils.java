@@ -122,7 +122,7 @@ public class CoordinateUtils {
 	}
 
 	/**
-	 * Gzd parse.
+	 * Parse the Grid Zone Designator out of an MGRS Coordinate
 	 *
 	 * @param mgrs the mgrs
 	 * @return the string[]
@@ -146,7 +146,7 @@ public class CoordinateUtils {
 	}
 
 	/**
-	 * Lon lat to UPS.
+	 * Convert Lon/Lat to Universal Polar Stereographic coordinate system
 	 *
 	 * @param lonlat the lonlat
 	 * @return the UPS coord
@@ -156,7 +156,7 @@ public class CoordinateUtils {
 	}
 
 	/**
-	 * Utm to UPS.
+	 * Convert Universal Transverse Mercator to Universal Polar Stereographic
 	 *
 	 * @param hemisphere the hemisphere
 	 * @param easting    the easting
@@ -168,17 +168,17 @@ public class CoordinateUtils {
 	}
 
 	/**
-	 * Lon lat to UTM.
+	 * Convert Lon/Lat to Universal Transverse Mercator
 	 *
-	 * @param lonlat the lonlat
-	 * @return the UTM coord
+	 * @param lonlat the Point2D representing the Longitude and Latitude to be converted
+	 * @return the UTM coordinate
 	 */
 	public static synchronized UTMCoord lonLatToUTM(Point2D lonlat) {
 		return UTMCoord.fromLatLon(Angle.fromDegreesLatitude(lonlat.getY()), Angle.fromDegreesLongitude(lonlat.getX()));
 	}
 
 	/**
-	 * Lon lat to UTM test tile.
+	 * Convert Lon/Lat to a Universal Transverse Mercator TestTile
 	 *
 	 * @param lonlat     the lonlat
 	 * @param arcSeconds the arc seconds
@@ -189,7 +189,7 @@ public class CoordinateUtils {
 	}
 
 	/**
-	 * Utm to lon lat.
+	 * UTM to lon/lat.
 	 *
 	 * @param zone       the zone
 	 * @param hemisphere the hemisphere
@@ -202,8 +202,8 @@ public class CoordinateUtils {
 		return new Point2D.Double(latLon.getLongitude().getDegrees(), latLon.getLatitude().getDegrees());
 	}
 
-	public static synchronized TestTile lonLatToTestTile(Point2D lonLat, Point2D arcSeconds, Point2D reference, Point2D gridSize) {
-		if (arcSeconds == null || Utility.isZero(arcSeconds.getX()) || Utility.isZero(arcSeconds.getY())) {
+	public static synchronized TestTile lonLatToTestTile(Point2D lonLat, Point2D tileSize, Point2D reference, Point2D gridSize) {
+		if (tileSize == null || Utility.isZero(tileSize.getX()) || Utility.isZero(tileSize.getY())) {
 			return null;
 		}
 		if (lonLat == null || lonLat.getY() < -90.0 || lonLat.getY() > 90.0 || lonLat.getX() < -180.0 || lonLat.getX() > 180.0) {
@@ -216,25 +216,26 @@ public class CoordinateUtils {
 			return null;
 		}
 
-		final Point2D lowerRightCornerOfTile = lonLatToLowerLeftCornerOfTile(lonLat, arcSeconds, reference, gridSize);
+		final Point2D lowerRightCornerOfTile = lonLatFromAnywhereInTileToNorthWestCornerOfTile(lonLat, tileSize, reference, gridSize);
 		if (lowerRightCornerOfTile == null) {
 			return new TestTile("Off Test Grid");
 		}
 		final UTMCoord utm = lonLatToUTM(lowerRightCornerOfTile);
 
-		return utmToUTMTestTile(utm, arcSeconds, Precision.PRECISION_1_M);
+		return utmToUTMTestTile(utm, tileSize, Precision.PRECISION_1_M);
 	}
 
-	public static synchronized Position lonLatToTestTilePosition(Point2D lonlat, Point2D arcSeconds, Point2D reference,
+	public static synchronized Position lonLatToTestTilePosition(Point2D lonlat, Point2D tileSize, Point2D reference,
 			Point2D gridSize) {
-		if (Utility.isZero(arcSeconds.getX()) || Utility.isZero(arcSeconds.getY())) {
+		
+		if (Utility.isZero(tileSize.getX()) || Utility.isZero(tileSize.getY())) {
 			return null;
 		}
 		if ((lonlat.getY() < -90.0) || (lonlat.getY() > 90.0) || (lonlat.getX() < -180.0) || (lonlat.getX() > 180.0)) {
 			return null;
 		}
 
-		final Point2D pt = lonLatToLowerLeftCornerOfTile(lonlat, arcSeconds, reference, gridSize);
+		final Point2D pt = lonLatFromAnywhereInTileToNorthWestCornerOfTile(lonlat, tileSize, reference, gridSize);
 
 		if (pt == null) {
 			return null;
@@ -244,7 +245,7 @@ public class CoordinateUtils {
 	}
 
 	/**
-	 * Utm coord to test tile string.
+	 * UTM coord to test tile string
 	 *
 	 * @param utm       the utm
 	 * @param precision the precision
@@ -319,53 +320,54 @@ public class CoordinateUtils {
 
 	/**
 	 * Finds the lower left LonLat coordinate of the tile occupied by lonLat
-	 *
-	 * @param lonlat   the LonLat (X,Y) coordinates that are the subject of the
-	 *                 request
-	 * @param arcSec   The size of the tile in arc-seconds
-	 * @param ulRef    the upper left corner of the grid
+	 * This only works in the north of the equator, in the western hemisphere 
+	 * Valid input range is 0 to +90 degrees latitude and 0 to -180 degrees longitude
+	 * 
+	 * @param lonlat   the LonLat (X,Y) coordinates that are the subject of the request
+	 * @param tileSize The size of the tile in degrees
+	 * @param refPt    the upper left corner of the grid
 	 * @param gridSize the grid (X,Y) size in degrees
-	 * @return the Lower left corner of the occupied tile
+	 * @return the Lower Left corner of the tile occupied by the LonLat position
 	 */
-	public static synchronized Point2D lonLatToLowerLeftCornerOfTile(Point2D lonlat, Point2D tileSize, Point2D refPt,
-			Point2D gridSize) {
-		if (Utility.isZero(tileSize.getX()) || Utility.isZero(tileSize.getY())) {
-			return null;
-		}
-		if (lonlat.getY() < -90.0 || lonlat.getY() > 90.0 || lonlat.getX() < -180.0 || lonlat.getX() > 180.0) {
+	public static synchronized Point2D lonLatFromAnywhereInTileToNorthWestCornerOfTile(Point2D lonlat, Point2D tileSize, Point2D refPt, Point2D gridSize) {
+
+		final double tileWidthDegrees = Math.abs(tileSize.getX());
+		final double tileHeightDegrees = Math.abs(tileSize.getY());
+		
+		if (Utility.isZero(tileWidthDegrees) || Utility.isZero(tileHeightDegrees)) {
 			return null;
 		}
 
-		// 1 - get UL reference point
+		// 1 - get North-West reference point
 		// 2 - calculate X-Y degrees per tile
 		// 3 - calculate how many degrees X-Y in from UL
 		// 4 - calculate number of tiles X-Y from UL
-		// 5 - calculate next lowest X-Y from step 4
-		// 6 - add reference point to result
-		// 7 - return lower left point
+		// 5 - add reference point to result
+		// 6 - return lower left point
 
-		final double verticalDistanceFromUL = refPt.getY() - lonlat.getY();
-		final double horizontalDistanceFromUL = lonlat.getX() - refPt.getX();
+		final double latDegreesFromUL = lonlat.getY() - refPt.getY();  // Lat = equator based (north of ref is positive - must be negative)
+		final double lonDegreesFromUL = lonlat.getX() - refPt.getX();  // Lon = Greenwich based (east of ref is positive - must be positive)
 
-		final double verticalEdge;
-		final double horizontalEdge;
+		if (latDegreesFromUL > 0 || lonDegreesFromUL < 0) {  // checking that the lonLat is South and East of the reference point
+			return null;
+		}
+		
+		if (Math.abs(latDegreesFromUL) <= gridSize.getY()     		// checking that Lat is inside the grid - magnitude based
+				&& Math.abs(lonDegreesFromUL) <= gridSize.getX()) { // checking that Lon is inside the grid - magnitude based
+			
+			final int latitudinalTileNumber = (int) Math.abs(latDegreesFromUL / tileHeightDegrees);  // zero based
 
-		if ((verticalDistanceFromUL >= 0) && (horizontalDistanceFromUL >= 0)
-				&& (verticalDistanceFromUL <= gridSize.getY()) && (horizontalDistanceFromUL <= gridSize.getX())) {
+			final int longitudinalTileNumber = (int) Math.abs(lonDegreesFromUL / tileWidthDegrees);  // zero based
 
-			final int verticalTileNumber = (int) (verticalDistanceFromUL / (tileSize.getY() / 3600.0)) + 1;
+			final double westLongitudinalEdge = refPt.getX() + (longitudinalTileNumber * tileWidthDegrees);
 
-			final int horizontalTileNumber = (int) (horizontalDistanceFromUL / (tileSize.getX() / 3600.0));
-
-			verticalEdge = refPt.getX() + (horizontalTileNumber * (tileSize.getX() / 3600.0));
-
-			horizontalEdge = refPt.getY() - (verticalTileNumber * (tileSize.getY() / 3600.0));
+			final double northLatitudinalEdge = refPt.getY() - (latitudinalTileNumber * tileHeightDegrees);
+			
+			return new Point.Double(westLongitudinalEdge, northLatitudinalEdge);
 
 		} else {
 			return null;
 		}
-
-		return new Point.Double(verticalEdge, horizontalEdge);
 	}
 
 	/**

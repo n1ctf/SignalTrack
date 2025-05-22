@@ -13,5 +13,4 @@ public interface ICoordinate {
     void setLon(double lon);
     
     Point2D getLonLat();
-
 }

@@ -405,13 +405,13 @@ public class CoverageTestObject {
         testRxSpecsValidForTest = userPrefs.getBoolean(testName + "_TestRxSpecsValidForTest", true);
         alertOnMinimumSamplesPerTileAcquired = userPrefs.getBoolean(testName + "_AlertOnMinimumSamplesPerTileAcquired", false);
 
-        showGridSquareShading = userPrefs.getBoolean(testName + "_ShowGridSquareShading", true);
-        showSignalMarkers = userPrefs.getBoolean(testName + "_ShowSignalMarkers", true);
-        showRings = userPrefs.getBoolean(testName + "_ShowRings", true);
-        showQuads = userPrefs.getBoolean(testName + "_ShowQuads", true);
-        showLines = userPrefs.getBoolean(testName + "_ShowLines", true);
-        showGrid = userPrefs.getBoolean(testName + "_ShowGrid", true);
-        enableAutoCalc = userPrefs.getBoolean(testName + "_EnableAutoCalc", true);
+        showGridSquareShading(userPrefs.getBoolean(testName + "_ShowGridSquareShading", true));
+        showSignalMarkers(userPrefs.getBoolean(testName + "_ShowSignalMarkers", true));
+        showRings(userPrefs.getBoolean(testName + "_ShowRings", true));
+        showQuads(userPrefs.getBoolean(testName + "_ShowQuads", true));
+        showLines(userPrefs.getBoolean(testName + "_ShowLines", true));
+        showGrid(userPrefs.getBoolean(testName + "_ShowGrid", true));
+        setEnableAutoCalc(userPrefs.getBoolean(testName + "_EnableAutoCalc", true));
 
         tileSelectedColor = getColor(userPrefs.getLong(testName + "_ColorTileSelected", new Color(127, 127, 127, 64).getRGB()));
         tileInProgressColor = getColor(userPrefs.getLong(testName + "_ColorTileInProgress", new Color(255, 255, 0, 64).getRGB()));
@@ -993,7 +993,7 @@ public class CoverageTestObject {
         return showGridSquareShading;
     }
 
-    public void setShowGridSquareShading(boolean showGridSquareShading) {
+    public void showGridSquareShading(boolean showGridSquareShading) {
         this.showGridSquareShading = showGridSquareShading;
     }
 
@@ -1001,7 +1001,7 @@ public class CoverageTestObject {
         return showSignalMarkers;
     }
 
-    public void setShowSignalMarkers(boolean showSignalMarkers) {
+    public void showSignalMarkers(boolean showSignalMarkers) {
         this.showSignalMarkers = showSignalMarkers;
     }
 
@@ -1009,7 +1009,7 @@ public class CoverageTestObject {
         return showRings;
     }
 
-    public void setShowRings(boolean showRings) {
+    public void showRings(boolean showRings) {
         this.showRings = showRings;
     }
 
@@ -1017,7 +1017,7 @@ public class CoverageTestObject {
         return showQuads;
     }
 
-    public void setShowQuads(boolean showQuads) {
+    public void showQuads(boolean showQuads) {
         this.showQuads = showQuads;
     }
 
@@ -1025,7 +1025,7 @@ public class CoverageTestObject {
         return showLines;
     }
 
-    public void setShowLines(boolean showLines) {
+    public void showLines(boolean showLines) {
         this.showLines = showLines;
     }
 
@@ -1041,7 +1041,7 @@ public class CoverageTestObject {
         return showGrid;
     }
 
-    public void setShowGrid(boolean showGrid) {
+    public void showGrid(boolean showGrid) {
         this.showGrid = showGrid;
     }
 
@@ -1353,7 +1353,7 @@ public class CoverageTestObject {
         return new Color(r, g, b, a);
     }
 
-    public Point2D.Double getTileSize() {
+    public Point2D.Double getTileSizeDegrees() {
         return tileSize;
     }
 
@@ -1467,7 +1467,7 @@ public class CoverageTestObject {
     }
 
     public long getNumberOfRequiredTiles() {
-        double z;
+        final double z;
         if (testCriteria == TestCriteria.GREATER_THAN) {
             z = oneSidedArgumentOfUnitNormal.get(getConfidenceLevel());
         } else {
@@ -1552,8 +1552,8 @@ public class CoverageTestObject {
         obj[1] = cto.getTestName().replace(".sql", "");
         obj[2] = cto.getMinTimePerTile();
         obj[3] = cto.getSignalSampleMode().ordinal();
-        obj[4] = cto.getTileSize().getX();
-        obj[5] = cto.getTileSize().getY();
+        obj[4] = cto.getTileSizeDegrees().getX();
+        obj[5] = cto.getTileSizeDegrees().getY();
         obj[6] = cto.getMinMeasurementsRequiredPerSubSample();
         obj[7] = cto.getMaxSamplesPerTile();
         obj[8] = cto.getMinSamplesPerTile();
@@ -1568,7 +1568,7 @@ public class CoverageTestObject {
 
     public List<Rectangle2D> getGridList() {
         final List<Rectangle2D> list = Collections.synchronizedList(new CopyOnWriteArrayList<>());
-        final Point2D.Double tileSizeDegrees = getTileSize();
+        final Point2D.Double tileSizeDegrees = getTileSizeDegrees();
         for (double x = getGridLeftDegrees(); x <= ((getGridRightDegrees() - tileSizeDegrees.getX()) + 0.0001); x += tileSizeDegrees.getX()) {
             for (double y = getGridTopDegrees(); y >= ((getGridBottomDegrees() + tileSizeDegrees.getY()) - 0.0001); y -= tileSizeDegrees.getY()) {
                 list.add(new Rectangle2D.Double(x, y, tileSizeDegrees.getX(), tileSizeDegrees.getY()));

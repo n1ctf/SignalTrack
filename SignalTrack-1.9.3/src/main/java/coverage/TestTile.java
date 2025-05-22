@@ -40,8 +40,7 @@ public class TestTile {
     private String message = "";
     private PropertyChangeSupport pcs = new PropertyChangeSupport(this);
 
-    public TestTile() {
-    }
+    public TestTile() {}
 
     public TestTile(TestTile testTile) {
         this.tileReference = testTile.getTileReference();
@@ -50,9 +49,9 @@ public class TestTile {
         this.easting = testTile.getEasting();
         this.northing = testTile.getNorthing();
         this.latBand = testTile.getLatBand();
-        this.lonlat = testTile.getLonLat();
+        this.lonlat = testTile.getNorthWestLonLat();
         this.precision = testTile.getPrecision();
-        this.tileSize = testTile.getTileSize();
+        this.tileSize = testTile.getTileSizeInDegrees();
         this.ber = testTile.getAvgBer();
         this.dBm = testTile.getAvgdBm();
         this.id = testTile.getID();
@@ -157,11 +156,11 @@ public class TestTile {
         return this.utmCoord.toString();
     }
 
-    public void setTileSize(Point2D tileSize) {
+    public void setTileSizeInDegrees(Point2D tileSize) {
         this.tileSize = tileSize;
     }
 
-    public Point2D getTileSize() {
+    public Point2D getTileSizeInDegrees() {
         return this.tileSize;
     }
 
@@ -169,16 +168,16 @@ public class TestTile {
         return this.zone;
     }
 
-    public Point2D getLonLat() {
+    public Point2D getNorthWestLonLat() {
         return this.lonlat;
     }
 
-    public void setLonLat(Point2D lonlat) {
+    public void setNorthWestLonLat(Point2D lonlat) {
         this.lonlat = lonlat;
     }
 
-    public List<Point2D> getTileCoordinates() {
-    	List<Point2D> list = new ArrayList<>();
+    public List<Point2D> getNorthWestBasedTileCoordinateSet() {
+    	final List<Point2D> list = new ArrayList<>();
     		list.add(lonlat);
     		list.add(new Point2D.Double(lonlat.getX() + tileSize.getX(), lonlat.getY()));
     		list.add(new Point2D.Double(lonlat.getX() + tileSize.getX(), lonlat.getY() - tileSize.getY()));
@@ -278,10 +277,7 @@ public class TestTile {
     }
 
     public double getAvgBer() {
-        if (this.measurementCount > 0) {
-            return this.ber / this.measurementCount;
-        }
-        return 0;
+        return this.measurementCount > 0 ? this.ber / this.measurementCount : 0;
     }
 
     public UTMCoord getUtmCoord() {
@@ -297,10 +293,7 @@ public class TestTile {
     }
 
     public double getAvgdBm() {
-        if (this.measurementCount > 0) {
-            return this.dBm / this.measurementCount;
-        }
-        return 0;
+        return this.measurementCount > 0 ? this.dBm / this.measurementCount : 0;
     }
 
     public PropertyChangeSupport getPcs() {
@@ -313,7 +306,7 @@ public class TestTile {
 
     @Override
     public String toString() {
-        if (!message.equals("")) {
+        if (!"".equals(message)) {
             return message;
         }
         return this.zone + " " + easting + "mE " + northing + "mN";
@@ -331,15 +324,15 @@ public class TestTile {
         obj[3] = getEasting();
         obj[4] = getNorthing();
         obj[5] = getGridZone();
-        obj[6] = getLonLat().getX();
-        obj[7] = getLonLat().getY();
+        obj[6] = getNorthWestLonLat().getX();
+        obj[7] = getNorthWestLonLat().getY();
         obj[8] = getPrecision().ordinal();
         obj[9] = getLatBand();
         obj[10] = getAvgSinad();
         obj[11] = getAvgBer();
         obj[12] = getAvgdBm();
-        obj[13] = getTileSize().getX();
-        obj[14] = getTileSize().getY();
+        obj[13] = getTileSizeInDegrees().getX();
+        obj[14] = getTileSizeInDegrees().getY();
         obj[15] = getMeasurementCount();
         obj[16] = isAccessable();
         return obj;
@@ -352,13 +345,13 @@ public class TestTile {
         setEasting((Long) obj[3]);
         setNorthing((Long) obj[4]);
         setGridZone((Integer) obj[5]);
-        setLonLat(new Point2D.Double((double) obj[6], (double) obj[7]));
+        setNorthWestLonLat(new Point2D.Double((double) obj[6], (double) obj[7]));
         setPrecision((Integer) obj[8]);
         setLatBand((String) obj[9]);
         setAvgSinad((double) obj[10]);
         setAvgBer((double) obj[11]);
         setAvgdBm((double) obj[12]);
-        setTileSize(new Point2D.Double((double) obj[13], (double) obj[14]));
+        setTileSizeInDegrees(new Point2D.Double((double) obj[13], (double) obj[14]));
         setMeasurementCount((Integer) obj[15]);
         setAccessable((Boolean) obj[16]);
     }
@@ -371,13 +364,13 @@ public class TestTile {
         testTile.setEasting((Long) obj[3]);
         testTile.setNorthing((Long) obj[4]);
         testTile.setGridZone((Integer) obj[5]);
-        testTile.setLonLat(new Point2D.Double((double) obj[6], (double) obj[7]));
+        testTile.setNorthWestLonLat(new Point2D.Double((double) obj[6], (double) obj[7]));
         testTile.setPrecision((Integer) obj[8]);
         testTile.setLatBand((String) obj[9]);
         testTile.setAvgSinad((double) obj[10]);
         testTile.setAvgBer((double) obj[11]);
         testTile.setAvgdBm((double) obj[12]);
-        testTile.setTileSize(new Point2D.Double((double) obj[13], (double) obj[14]));
+        testTile.setTileSizeInDegrees(new Point2D.Double((double) obj[13], (double) obj[14]));
         testTile.setMeasurementCount((Integer) obj[15]);
         testTile.setAccessable((Boolean) obj[16]);
         return testTile;
@@ -492,13 +485,13 @@ public class TestTile {
             return false;
         }
         final TestTile other = (TestTile) obj;
-        if (other.getLonLat() == null) {
+        if (other.getNorthWestLonLat() == null) {
             return false;
         }
-        if (lonlat.getX() != other.getLonLat().getX()) {
+        if (lonlat.getX() != other.getNorthWestLonLat().getX()) {
             return false;
         }
-        return lonlat.getY() == other.getLonLat().getY();
+        return lonlat.getY() == other.getNorthWestLonLat().getY();
     }
 
     public void addPropertyChangeListener(PropertyChangeListener listener) {

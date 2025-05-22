@@ -1175,7 +1175,7 @@ public class WorldWindMap extends AbstractMap {
 
 	@Override
 	public synchronized void addTestTile(TestTile testTile) {
-		final GeoTile geoTile = new GeoTile(testTile.getLonLat(), testTile.getTileSize());
+		final GeoTile geoTile = new GeoTile(testTile.getNorthWestLonLat(), testTile.getTileSizeInDegrees());
 		geoTile.setID(testTile.getID());
 		final BasicShapeAttributes attrs = new BasicShapeAttributes();
 		attrs.setInteriorOpacity(0.3);

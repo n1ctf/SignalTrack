@@ -9,7 +9,6 @@
 package org.jxmapviewer.viewer;
 
 import java.awt.geom.Point2D;
-import java.io.Serializable;
 
 /**
  * An immutable coordinate in the real (geographic) world, composed of a
@@ -17,9 +16,7 @@ import java.io.Serializable;
  *
  * @author rbair
  */
-public class GeoPosition implements Serializable {
-	private static final long serialVersionUID = -6085696802780001937L;
-	
+public class GeoPosition {	
 	private double latitude;
     private double longitude;
 
@@ -28,7 +25,7 @@ public class GeoPosition implements Serializable {
      * longitude. These are double values in decimal degrees, not degrees,
      * minutes, and seconds. Use the other constructor for those.
      *
-     * @param latitude a latitude value in decmial degrees
+     * @param latitude a latitude value in decimal degrees
      * @param longitude a longitude value in decimal degrees
      */
     public GeoPosition(double latitude, double longitude) {
@@ -63,10 +60,8 @@ public class GeoPosition implements Serializable {
      * @param lonMinutes the minutes part of the current longitude
      * @param lonSeconds the seconds part of the current longitude
      */
-    public GeoPosition(int latDegrees, int latMinutes, int latSeconds,
-            int lonDegrees, int lonMinutes, int lonSeconds) {
-        this(latDegrees + (latMinutes + latSeconds / 60.0) / 60.0,
-                lonDegrees + (lonMinutes + lonSeconds / 60.0) / 60.0);
+    public GeoPosition(int latDegrees, int latMinutes, int latSeconds, int lonDegrees, int lonMinutes, int lonSeconds) {
+        this(latDegrees + (latMinutes + latSeconds / 60.0) / 60.0, lonDegrees + (lonMinutes + lonSeconds / 60.0) / 60.0);
     }
     
     public GeoPosition(Point2D point) {
@@ -116,19 +111,13 @@ public class GeoPosition implements Serializable {
         if (obj == null) {
             return false;
         }
-        if (!(obj instanceof GeoPosition)) {
+        if (!(obj instanceof GeoPosition other)) {
             return false;
         }
-        GeoPosition other = (GeoPosition) obj;
-        if (Double.doubleToLongBits(latitude)
-                != Double.doubleToLongBits(other.latitude)) {
+        if (Double.doubleToLongBits(latitude) != Double.doubleToLongBits(other.latitude)) {
             return false;
         }
-        if (Double.doubleToLongBits(longitude)
-                != Double.doubleToLongBits(other.longitude)) {
-            return false;
-        }
-        return true;
+        return Double.doubleToLongBits(longitude) == Double.doubleToLongBits(other.longitude);
     }
 
     @Override

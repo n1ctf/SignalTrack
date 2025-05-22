@@ -1,4 +1,4 @@
-package utility;
+package geometry;
 
 import java.awt.geom.Line2D;
 import java.awt.geom.Point2D;
@@ -8,7 +8,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
-import geometry.Coordinate;
+import utility.Utility;
 
 public final class GeometryUtils {
 
@@ -81,7 +81,7 @@ public final class GeometryUtils {
 				|| inner.getY() > outer.getY() || inner.getY() - inner.getHeight() < outer.getY() - outer.getHeight());
 	}
 	
-	public static synchronized List<Coordinate> getTestTilesWithinRectangle(final Rectangle2D r, Collection<Rectangle2D> rectangles) {
+	public static synchronized List<Coordinate> getSouthWestCoordinatesOfAllTestTilesWithinRectangle(final Rectangle2D r, Collection<Rectangle2D> rectangles) {
 		final List<Coordinate> list = new CopyOnWriteArrayList<>();
 		rectangles.stream().filter(tile -> (GeometryUtils.isInside(r, tile)))
 				.forEachOrdered(tile -> list.add(new Coordinate(tile.getX(), tile.getY() - tile.getHeight())));

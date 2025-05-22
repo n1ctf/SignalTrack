@@ -1603,27 +1603,27 @@ public class CoverageTestComponent extends JFrame {
 
         showGridSquareShadingCheckBox.addItemListener(event -> {
             final JCheckBox cb = (JCheckBox) event.getSource();
-            cto.setShowGridSquareShading(cb.isSelected());
+            cto.showGridSquareShading(cb.isSelected());
         });
 
         showTestGridCheckBox.addItemListener(event -> {
             final JCheckBox cb = (JCheckBox) event.getSource();
-            cto.setShowGrid(cb.isSelected());
+            cto.showGrid(cb.isSelected());
         });
 
         showLinesCheckBox.addItemListener(event -> {
             final JCheckBox cb = (JCheckBox) event.getSource();
-            cto.setShowLines(cb.isSelected());
+            cto.showLines(cb.isSelected());
         });
 
         showRingsCheckBox.addItemListener(event -> {
             final JCheckBox cb = (JCheckBox) event.getSource();
-            cto.setShowRings(cb.isSelected());
+            cto.showRings(cb.isSelected());
         });
 
         showQuadsCheckBox.addItemListener(event -> {
             final JCheckBox cb = (JCheckBox) event.getSource();
-            cto.setShowQuads(cb.isSelected());
+            cto.showQuads(cb.isSelected());
         });
 
         requiredSizeOfTileComboBox.addItemListener(event -> {
@@ -2018,7 +2018,7 @@ public class CoverageTestComponent extends JFrame {
     private void setGridWidth() {
         gridWidthMilesTextField.setFont(new Font(gridWidthMilesTextField.getFont().getName(), Font.PLAIN, gridWidthMilesTextField.getFont().getSize()));
         final double degrees = Vincenty.milesToDegrees(Double.parseDouble(gridWidthMilesTextField.getText()), 90F, cto.getGridTopDegrees());
-        cto.setGridWidthDegrees(mRound(degrees, cto.getTileSize().getX()));
+        cto.setGridWidthDegrees(mRound(degrees, cto.getTileSizeDegrees().getX()));
         gridWidthMilesTextField.setText(widthFormat.format(Vincenty.degreesToMiles(cto.getGridWidthDegrees(), 90F, cto.getGridTopDegrees())));
         if (!isEqual(cto.getGridLeftDegrees(), -999)) {
             cto.setGridRightDegrees(cto.getGridLeftDegrees() + cto.getGridWidthDegrees());
@@ -2029,7 +2029,7 @@ public class CoverageTestComponent extends JFrame {
     private void setGridHeight() {
         gridHeightMilesTextField.setFont(new Font(gridHeightMilesTextField.getFont().getName(), Font.PLAIN, gridHeightMilesTextField.getFont().getSize()));
         final double degrees = Vincenty.milesToDegrees(Double.parseDouble(gridHeightMilesTextField.getText()), 0F, cto.getGridTopDegrees());
-        cto.setGridHeightDegrees(mRound(degrees, cto.getTileSize().getY()));
+        cto.setGridHeightDegrees(mRound(degrees, cto.getTileSizeDegrees().getY()));
         gridHeightMilesTextField.setText(heightFormat.format(Vincenty.degreesToMiles(cto.getGridHeightDegrees(), 0F, cto.getGridTopDegrees())));
         if (!isEqual(cto.getGridTopDegrees(), -999)) {
             cto.setGridBottomDegrees(cto.getGridTopDegrees() - cto.getGridHeightDegrees());
@@ -2066,7 +2066,7 @@ public class CoverageTestComponent extends JFrame {
 
     private void setGridBottom() {
         gridBottomTextField.setFont(new Font(gridBottomTextField.getFont().getName(), Font.PLAIN, gridBottomTextField.getFont().getSize()));
-        cto.setGridBottomDegrees(roundToBottomEdge(Double.parseDouble(gridBottomTextField.getText()), cto.getGridTopDegrees(), cto.getTileSize().getY()));
+        cto.setGridBottomDegrees(roundToBottomEdge(Double.parseDouble(gridBottomTextField.getText()), cto.getGridTopDegrees(), cto.getTileSizeDegrees().getY()));
         gridBottomTextField.setText(latFormat.format(cto.getGridBottomDegrees()));
         cto.setGridHeightDegrees(Math.abs(cto.getGridTopDegrees() - cto.getGridBottomDegrees()));
         gridHeightMilesTextField.setText(heightFormat.format(Vincenty.degreesToMiles(cto.getGridHeightDegrees(), 0F, cto.getGridTopDegrees())));
@@ -2074,7 +2074,7 @@ public class CoverageTestComponent extends JFrame {
 
     private void setGridRight() {
         gridRightTextField.setFont(new Font(gridRightTextField.getFont().getName(), Font.PLAIN, gridRightTextField.getFont().getSize()));
-        cto.setGridRightDegrees(roundToRightEdge(Double.parseDouble(gridRightTextField.getText()), cto.getGridLeftDegrees(), cto.getTileSize().getX()));
+        cto.setGridRightDegrees(roundToRightEdge(Double.parseDouble(gridRightTextField.getText()), cto.getGridLeftDegrees(), cto.getTileSizeDegrees().getX()));
         gridRightTextField.setText(lonFormat.format(cto.getGridRightDegrees()));
         cto.setGridWidthDegrees(Math.abs(cto.getGridLeftDegrees() - cto.getGridRightDegrees()));
         gridWidthMilesTextField.setText(widthFormat.format(Vincenty.degreesToMiles(cto.getGridWidthDegrees(), 90F, cto.getGridTopDegrees())));
@@ -2371,7 +2371,7 @@ public class CoverageTestComponent extends JFrame {
         showQuadsCheckBox.setSelected(cto.isShowQuads());
         showLinesCheckBox.setSelected(cto.isShowLines());
 
-        setTileSizeComboBox(requiredSizeOfTileComboBox, cto.getTileSize());
+        setTileSizeComboBox(requiredSizeOfTileComboBox, cto.getTileSizeDegrees());
         setTileSizeComboBox(maxVerticalSizeOfTileComboBox, cto.getMaxTileSize());
         setTileSizeComboBox(minVerticalSizeOfTileComboBox, cto.getMinTileSize());
 

@@ -33,6 +33,7 @@ import database.DatabaseMode;
 
 import geometry.Coordinate;
 import geometry.CoordinateUtils;
+import geometry.GeometryUtils;
 import geometry.CoordinateUtils.Precision;
 
 import gov.epa.AirNowAPI;
@@ -208,7 +209,6 @@ import tty.AbstractTeletypeController;
 import tty.AbstractTeletypeController.TTYEvents;
 import utility.AePlayWave;
 import utility.CPUUsageCollector;
-import utility.GeometryUtils;
 import utility.IconLoader;
 import utility.Maidenhead;
 import utility.PreviewPrintPanel;
@@ -500,7 +500,7 @@ public class SignalTrack extends JFrame {
 
     private SignalTrackMapNames signalTrackMapName;
 
-    private final transient ScheduledExecutorService tt4Scheduler = Executors.newScheduledThreadPool(0);
+    private final transient ScheduledExecutorService aprsScheduler = Executors.newScheduledThreadPool(0);
     
     private transient ScheduledFuture<?> staticSchedulerHandle;
     private transient ScheduledExecutorService staticScheduler;
@@ -563,11 +563,9 @@ public class SignalTrack extends JFrame {
     }
 
     private void configureLogger() {
-        Handler fh = null;
-        Handler ch = null;
         try {
-            fh = new FileHandler("%t/SignalTrack.log");
-            ch = new ConsoleHandler();
+            final Handler fh = new FileHandler("%t/SignalTrack.log");
+            final Handler ch = new ConsoleHandler();
             LOG.addHandler(fh);
             LOG.setLevel(Level.FINEST);
             LOG.addHandler(ch);
@@ -1222,7 +1220,24 @@ public class SignalTrack extends JFrame {
         mapMouseListener = new MouseAdapter() {
             @Override
             public void mouseClicked(final MouseEvent event) {
-                // NOOP
+            	if (event.getButton() == MouseEvent.BUTTON1 && !isInhibitLeftMouseButtonReleaseEvent()) {
+            		if (isTestTileSelectMode() && isMapDragged()) {
+                        invokeLaterInDispatchThreadIfNeeded(() -> {
+                            doActionButton.setText("Toggle Selected Tiles");
+                            doActionButton.setToolTipText("Press to add or remove selected tiles from current test database");
+                            doActionButton.setVisible(true);
+                        });
+                        setMapDragged(false);
+                    }
+                    if (isBulkMapTileDownloadSelectionMode() && isMapDragged()) {
+                        invokeLaterInDispatchThreadIfNeeded(() -> {
+                            doActionButton.setText("Download Selected Area");
+                            doActionButton.setToolTipText("Press to download selected area to offline map cache");
+                            doActionButton.setVisible(true);
+                        });
+                        setMapDragged(false);
+                    }
+                }
             }
 
             @Override
@@ -1248,20 +1263,35 @@ public class SignalTrack extends JFrame {
             @Override
             public void mouseReleased(final MouseEvent event) {
                 if (event.getButton() == MouseEvent.BUTTON1 && !isInhibitLeftMouseButtonReleaseEvent()) {
-                    completeSelectionRectangle();
+                	if (isTestTileSelectMode() && isMapDragged()) {
+                        invokeLaterInDispatchThreadIfNeeded(() -> {
+                            doActionButton.setText("Toggle Selected Tiles");
+                            doActionButton.setToolTipText("Press to add or remove selected tiles from current test database");
+                            doActionButton.setVisible(true);
+                        });
+                        setMapDragged(false);
+                    }
+                    if (isBulkMapTileDownloadSelectionMode() && isMapDragged()) {
+                        invokeLaterInDispatchThreadIfNeeded(() -> {
+                            doActionButton.setText("Download Selected Area");
+                            doActionButton.setToolTipText("Press to download selected area to offline map cache");
+                            doActionButton.setVisible(true);
+                        });
+                        setMapDragged(false);
+                    }
                 }
                 setInhibitLeftMouseButtonReleaseEvent(false);
             }
-
         };
 
         mapMouseMotionListener = new MouseAdapter() {
             @Override
             public void mouseDragged(MouseEvent e) {
+            	// TODO:: add buffer to control how much drag before action is taken
                 setMapDragged(true);
                 mapCurrentCursor = abstractMap.getMouseDragCoordinates();
                 handleMouseDrag();
-                if (isTestGridSelectionMode() || isBulkDownloadSelectionMode() || isMeasureMode() || isTestGridLearnMode()) {
+                if (isTestGridDrawOutlineMode() || isBulkMapTileDownloadSelectionMode() || isMeasureMode() || isTestTileSelectMode()) {
                     e.consume();
                 }
             }
@@ -1302,7 +1332,7 @@ public class SignalTrack extends JFrame {
                                     new Point2D.Double(coverageTestObject.getTestGridRectangle().getWidth(),
                                             coverageTestObject.getTestGridRectangle().getHeight()));
                             if (testTile != null && !testTile.getMessage().contains("Off Test Grid")
-                                    && !isTestGridLearnMode() && abstractMap.isShowGrid()) {
+                                    && !isTestTileSelectMode() && abstractMap.isShowGrid()) {
                                 cursorMaidenheadReference.setHorizontalAlignment(SwingConstants.LEFT);
                                 cursorMaidenheadReference.setText(testTile.toFormattedTestTileDesignator());
                                 if ((database != null && getDatabaseMode() != DatabaseMode.CLOSED)
@@ -1325,7 +1355,7 @@ public class SignalTrack extends JFrame {
                 if (cursorHand) {
                     abstractMap.setCursor(new Cursor(Cursor.HAND_CURSOR));
                 } else {
-                    if (isTestGridSelectionMode()) {
+                    if (isTestGridDrawOutlineMode()) {
                         abstractMap.setCursor(new Cursor(Cursor.CROSSHAIR_CURSOR));
                     } else {
                         abstractMap.setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
@@ -1528,8 +1558,8 @@ public class SignalTrack extends JFrame {
             if (Database.MEASUREMENT_SET_RECORD_APPENDED.equals(event.getPropertyName())) {
                 measurementSetTableAppendedEvent(event);
             }
-            if (Database.TILE_TABLE_APPENDED.equals(event.getPropertyName())) {
-                tileTableAppendedEvent(event);
+            if (Database.TILE_ADDED_TO_TILE_TABLE.equals(event.getPropertyName())) {
+                tileAddedToTileTableEvent(event);
             }
             if (Database.TILE_DELETED.equals(event.getPropertyName())) {
                 tileDeletedEvent(event);
@@ -1555,8 +1585,8 @@ public class SignalTrack extends JFrame {
             if (Database.MEASUREMENT_RECORD_READY.equals(event.getPropertyName())) {
                 measurementRecordReadyEvent();
             }
-            if (Database.TILE_RECORD_READY.equals(event.getPropertyName())) {
-                tileRecordReadyEvent();
+            if (Database.TILE_RECORD_RESTORED.equals(event.getPropertyName())) {
+                tileRecordRestoredEvent();
             }
             if (Database.STATIC_MEASUREMENT_RECORD_COUNT_READY.equals(event.getPropertyName())) {
                 staticRecordCountReadyEvent(event);
@@ -2017,8 +2047,8 @@ public class SignalTrack extends JFrame {
     private void aboutMenuActionListenerEvent() {
         invokeLaterInDispatchThreadIfNeeded(
                 () -> JOptionPane.showMessageDialog(SwingUtilities.getWindowAncestor(SignalTrack.this),
-                        "SignalTrack version 1.9.3.20231121" + System.lineSeparator()
-                        + "(c) Copyright John R. Chartkoff, 2023.  All rights reserved.",
+                        "SignalTrack version 1.9.3.20250519" + System.lineSeparator()
+                        + "(c) Copyright John R. Chartkoff, 2025.  All rights reserved.",
                         "About SignalTrack", JOptionPane.INFORMATION_MESSAGE));
     }
 
@@ -2221,12 +2251,12 @@ public class SignalTrack extends JFrame {
         }
     }
 
-    private synchronized void createBlankTestTile(Point2D lonLat) {
+    private synchronized void createBlankTestTile(Point2D anyLonLatWithinTargetTile) {
         invokeLaterInDispatchThreadIfNeeded(() -> abstractMap.setCursor(new Cursor(Cursor.WAIT_CURSOR)));
-        final Point2D tileSize = coverageTestObject.getTileSizeArcSeconds();
+        final Point2D tileSize = coverageTestObject.getTileSizeDegrees();
         final Point2D gridRef = coverageTestObject.getGridReference();
         final Point2D gridSize = coverageTestObject.getGridSize();
-        final Point2D p2d = CoordinateUtils.lonLatToLowerLeftCornerOfTile(lonLat, tileSize, gridRef, gridSize);
+        final Point2D p2d = CoordinateUtils.lonLatFromAnywhereInTileToNorthWestCornerOfTile(anyLonLatWithinTargetTile, tileSize, gridRef, gridSize);
         if (p2d != null) {
             createBlankTestTile(new Coordinate(p2d));
         } else {
@@ -2234,8 +2264,8 @@ public class SignalTrack extends JFrame {
         }
     }
 
-    private synchronized void createBlankTestTile(Coordinate coordinate) {
-        if (isTestGridLearnMode() && abstractMap.isShowGrid()) {
+    private synchronized void createBlankTestTile(Coordinate northWestCoordinate) {
+        if (isTestTileSelectMode()) {
             invokeLaterInDispatchThreadIfNeeded(() -> abstractMap.setCursor(new Cursor(Cursor.WAIT_CURSOR)));
             if (database == null) {
                 invokeLaterInDispatchThreadIfNeeded(() -> {
@@ -2245,14 +2275,14 @@ public class SignalTrack extends JFrame {
                             JOptionPane.ERROR_MESSAGE);
                 });
             } else {
-                final Point2D tileSize = coverageTestObject.getTileSizeArcSeconds();
-                final Precision precision = getRequiredPrecision(tileSize);
-                final TestTile newTile = database.getTestTileAt(coordinate.getLonLat());
+                final Point2D tileSizeDegrees = coverageTestObject.getTileSizeDegrees();
+                final Precision requiredPrecision = getRequiredPrecision(tileSizeDegrees);
+                final TestTile newTile = database.getTestTileWithThisNorthWestLonLat(northWestCoordinate.getLonLat());
                 if (newTile != null) {
                     database.deleteTestTile(newTile);
                 } else {
-                    database.appendTileRecord(new TestTile(testName.replace(".sql", ""),
-                            coordinate.getLonLat(), tileSize, precision));
+                    database.appendTileRecordWithThisNorthWestCoordinateReference(new TestTile(testName.replace(".sql", ""),
+                            northWestCoordinate.getLonLat(), tileSizeDegrees, requiredPrecision));                    
                 }
             }
         }
@@ -2287,8 +2317,7 @@ public class SignalTrack extends JFrame {
             coverageTestObject.getPropertyChangeSupport().removePropertyChangeListener(coverageTestObjectListener);
             coverageTestObject = new CoverageTestObject(isClearAllPrefs(), getAbstractRadio(), testName);
             coverageTestObject.getPropertyChangeSupport().addPropertyChangeListener(coverageTestObjectListener);
-            database.openDatabase(new File(dataDirectory.getPath() + File.separator + testName),
-                    coverageTestObject, staticTestObject);
+            database.openDatabase(new File(dataDirectory.getPath() + File.separator + testName), coverageTestObject, staticTestObject);
             logFileNameLabel.setText(testName);
         } else {
             database.openDatabase(file, coverageTestObject, staticTestObject);
@@ -2528,31 +2557,29 @@ public class SignalTrack extends JFrame {
         userPref.put("SignalTrackMapName", signalTrackMapName.name());
         userPref.put("EnvironmentMonitorClassName", environmentSensorClassName);
         
-        if (tt4Scheduler != null) {
-        	if (tt4Scheduler != null) {
-				try {
-					LOG.log(Level.INFO, "Initializing SignalTrack.tt4Scheduler termination....");
-					tt4Scheduler.shutdown();
-					tt4Scheduler.awaitTermination(20, TimeUnit.SECONDS);
-					LOG.log(Level.INFO, "SignalTrack.tt4Scheduler has gracefully terminated");
-				} catch (InterruptedException e) {
-					LOG.log(Level.SEVERE, "SignalTrack.tt4Scheduler has timed out after 20 seconds of waiting to terminate processes.");
-					Thread.currentThread().interrupt();
-				}
+        if (aprsScheduler != null) {
+			try {
+				LOG.log(Level.INFO, "Initializing SignalTrack.tt4Scheduler termination....");
+				aprsScheduler.shutdown();
+				aprsScheduler.awaitTermination(5, TimeUnit.SECONDS);
+				LOG.log(Level.INFO, "SignalTrack.tt4Scheduler has gracefully terminated");
+			} catch (InterruptedException e) {
+				aprsScheduler.shutdownNow();
+				LOG.log(Level.SEVERE, "SignalTrack.tt4Scheduler has timed out after 5 seconds of waiting to terminate processes.");
+				Thread.currentThread().interrupt();
 			}
         }
         
         if (staticScheduler != null) {
-        	if (staticScheduler != null) {
-				try {
-					LOG.log(Level.INFO, "Initializing SignalTrack.staticScheduler termination....");
-					staticScheduler.shutdown();
-					staticScheduler.awaitTermination(20, TimeUnit.SECONDS);
-					LOG.log(Level.INFO, "SignalTrack.staticScheduler has gracefully terminated");
-				} catch (InterruptedException e) {
-					LOG.log(Level.SEVERE, "SignalTrack.staticScheduler has timed out after 20 seconds of waiting to terminate processes.");
-					Thread.currentThread().interrupt();
-				}
+			try {
+				LOG.log(Level.INFO, "Initializing SignalTrack.staticScheduler termination....");
+				staticScheduler.shutdown();
+				staticScheduler.awaitTermination(5, TimeUnit.SECONDS);
+				LOG.log(Level.INFO, "SignalTrack.staticScheduler has gracefully terminated");
+			} catch (InterruptedException e) {
+				staticScheduler.shutdownNow();
+				LOG.log(Level.SEVERE, "SignalTrack.staticScheduler has timed out after 5 seconds of waiting to terminate processes.");
+				Thread.currentThread().interrupt();
 			}
         }
         
@@ -2965,7 +2992,7 @@ public class SignalTrack extends JFrame {
         final Point2D gridRef = coverageTestObject.getGridReference();
         final Point2D gridSize = coverageTestObject.getGridSize();
 
-        final Point2D lonlat = CoordinateUtils.lonLatToLowerLeftCornerOfTile(lonLat, tileSize, gridRef, gridSize);
+        final Point2D lonlat = CoordinateUtils.lonLatFromAnywhereInTileToNorthWestCornerOfTile(lonLat, tileSize, gridRef, gridSize);
 
         if (lonlat == null) {
             return true;
@@ -2979,7 +3006,7 @@ public class SignalTrack extends JFrame {
         if (abstractMap.getSignalTrackMapName() == SignalTrackMapNames.WorldWindMap) {
             abstractMap.showBulkDownloadPanel();
         } else {
-            setBulkDownloadSelectionMode(true);
+            setBulkMapTileDownloadSelectionMode(true);
             invokeLaterInDispatchThreadIfNeeded(() -> {
                 messageLabel.setText("       MAP BULK DOWNLOAD MODE");
                 doActionButton.setText("Apply Selection");
@@ -3000,13 +3027,13 @@ public class SignalTrack extends JFrame {
     }
 
     private synchronized void handleMouseDrag() {
-        if (isTestGridSelectionMode()) {
+        if (isTestGridDrawOutlineMode()) {
         	final double t = GeometryUtils.getAngleFromScreenCoords(abstractMap.getSelectionRectangleOrigin(), mapCurrentCursor);
             if (t <= 90 || t >= 180) {
                 return;
             }
-            final double xTileSize = coverageTestObject.getTileSize().getX();
-            final double yTileSize = coverageTestObject.getTileSize().getY();
+            final double xTileSize = coverageTestObject.getTileSizeDegrees().getX();
+            final double yTileSize = coverageTestObject.getTileSizeDegrees().getY();
             final long xTiles = Math
                     .round(Math.abs(abstractMap.getMouseDragCoordinates().getX() - abstractMap.getSelectionRectangle().getX())
                             / xTileSize);
@@ -3019,7 +3046,7 @@ public class SignalTrack extends JFrame {
             abstractMap.setSelectionRectangleDestination(new Point2D.Double(lowerRightLon, lowerRightLat));
             setInhibitLeftMouseButtonReleaseEvent(false);
         }
-        if (isTestGridLearnMode()) {
+        if (isTestTileSelectMode()) {
         	final double t = GeometryUtils.getAngleFromScreenCoords(abstractMap.getSelectionRectangleOrigin(), mapCurrentCursor);
             if (t <= 90 || t >= 180) {
                 return;
@@ -3029,13 +3056,13 @@ public class SignalTrack extends JFrame {
                     GeometryUtils.getRectangleCoordsFromScreenPoints(abstractMap.getSelectionRectangleOrigin(), mapCurrentCursor));
             setInhibitLeftMouseButtonReleaseEvent(false);
         }
-        if (isBulkDownloadSelectionMode()) {
+        if (isBulkMapTileDownloadSelectionMode()) {
         	final double t = GeometryUtils.getAngleFromScreenCoords(abstractMap.getSelectionRectangleOrigin(), mapCurrentCursor);
             if (t <= 90 || t >= 180) {
                 return;
             }
-            final double xTileSize = coverageTestObject.getTileSize().getX();
-            final double yTileSize = coverageTestObject.getTileSize().getY();
+            final double xTileSize = coverageTestObject.getTileSizeDegrees().getX();
+            final double yTileSize = coverageTestObject.getTileSizeDegrees().getY();
             final long xTiles = Math
                     .round(Math.abs(abstractMap.getMouseDragCoordinates().getX() - abstractMap.getSelectionRectangle().getX())
                             / xTileSize);
@@ -3052,7 +3079,6 @@ public class SignalTrack extends JFrame {
     }
 
     private void updateMeasureModeLabel(SurfaceLine dos) {
-
         if (measureMode) {
             invokeLaterInDispatchThreadIfNeeded(() -> messageLabel
                     .setText(String.format(getLocale(), "%9.1f", dos.getFeet()) + " ft | " + String.format(getLocale(), "%4.3f", dos.getMiles())
@@ -3069,41 +3095,22 @@ public class SignalTrack extends JFrame {
             setMapDragged(true);
         }
     }
-
-    private synchronized void completeSelectionRectangle() {
-        if (isTestGridLearnMode() && isMapDragged()) {
-            invokeLaterInDispatchThreadIfNeeded(() -> {
-                doActionButton.setText("Toggle Selected Tiles");
-                doActionButton.setToolTipText("Press to add / toggle selected tiles to current test database");
-                doActionButton.setVisible(true);
-            });
-            setMapDragged(false);
-        }
-        if (isBulkDownloadSelectionMode() && isMapDragged()) {
-            invokeLaterInDispatchThreadIfNeeded(() -> {
-                doActionButton.setText("Download Selected Area");
-                doActionButton.setToolTipText("Press to download selected area to offline map cache");
-                doActionButton.setVisible(true);
-            });
-            setMapDragged(false);
-        }
-    }
-
+    
     private synchronized void mapPanelLeftMouseButtonPressed() {
         if (!Coordinate.validLongitude(abstractMap.getMouseCoordinates().getY())) {
             return;
         }
         final Point2D point = abstractMap.getMouseCoordinates();
-        if (isTestGridSelectionMode() || isTestGridLearnMode() || isBulkDownloadSelectionMode()) {
+        if (isTestGridDrawOutlineMode() || isTestTileSelectMode() || isBulkMapTileDownloadSelectionMode()) {
             abstractMap.setSelectionRectangleVisible(false);
             abstractMap.setSelectionRectangleOrigin(point);
             abstractMap.setSelectionRectangleDestination(abstractMap.getMouseCoordinates());
         }
         if ((getPositionSource() == PositionSource.MANUAL) && abstractMap.isShowGrid() && isCoverageTestActive()
-                && !isTestGridLearnMode()) {
+                && !isTestTileSelectMode()) {
             setPositionComponents(PositionSource.MANUAL, point);
         }
-        if (!isCoverageTestActive() && isTestGridLearnMode() && !isMapDragged()) {
+        if (!isCoverageTestActive() && isTestTileSelectMode() && !isMapDragged()) {
             createBlankTestTile(point);
         }
     }
@@ -3328,7 +3335,7 @@ public class SignalTrack extends JFrame {
 
     private synchronized void measureButtonActionListenerEvent(ActionEvent event) {
         if (event.getID() == ActionEvent.ACTION_PERFORMED) {
-            if (isTestGridLearnMode() || isTestGridSelectionMode()) {
+            if (isTestTileSelectMode() || isTestGridDrawOutlineMode()) {
                 setMeasureMode(false);
                 abstractMap.setRulerMode(false);
             } else {
@@ -3419,6 +3426,8 @@ public class SignalTrack extends JFrame {
                 createNewDatabase(fileChooser.getCurrentDirectory());
             } else {
                 openDatabase(fileChooser.getSelectedFile());
+                abstractMap.showGrid(true);
+                abstractMap.showTestTiles(true);
             }
         }
 
@@ -3435,7 +3444,7 @@ public class SignalTrack extends JFrame {
     private void openDatabase(File file) {
         stopAllProcesses();
         setDataMode(DataMode.STOP);
-        clearMapObjects();
+        // clearMapObjects();
         database = new Database(databaseConfig);
         database.addPropertyChangeListener(databaseListener);
         database.openDatabase(file, coverageTestObject, staticTestObject);
@@ -3586,7 +3595,7 @@ public class SignalTrack extends JFrame {
                             && getDataMode() == DataMode.RECORD && currentTestTile
                                     .getMeasurementCount() <= coverageTestObject.getMaxSamplesPerTile()) {
                     	final int variableDelay = (int) Math
-                                .round(getVariableTimePeriod(currentTestTile.getTileSize().getY(),
+                                .round(getVariableTimePeriod(currentTestTile.getTileSizeInDegrees().getY(),
                                         gpsProcessor.getSpeedMadeGoodKPH(), coverageTestObject.getDotsPerTile()));
                         setMeasurementPeriodText(String.format(getLocale(), "%4d", variableDelay));
                         variableTimer.setDelay(variableDelay);
@@ -3652,7 +3661,7 @@ public class SignalTrack extends JFrame {
 
             if (coverageTestObject.getTimingMode() == TimingMode.VARIABLE
                     && System.currentTimeMillis() - variableTimerSetMillis > VARIABLE_TIMER_RECALC_MILLIS) {
-                variableTimer.setDelay((int) getVariableTimePeriod(coverageTestObject.getTileSize().getY(),
+                variableTimer.setDelay((int) getVariableTimePeriod(coverageTestObject.getTileSizeDegrees().getY(),
                         gpsProcessor.getSpeedMadeGoodKPH(), coverageTestObject.getMinSamplesPerTile()));
                 setMeasurementPeriodText(String.valueOf(variableTimer.getDelay()));
             }
@@ -3835,11 +3844,9 @@ public class SignalTrack extends JFrame {
             if (event.getID() == JFileChooser.APPROVE_OPTION) {
             	final File from = dataDirectory;
             	final File to = fileChooser.getSelectedFile();
-                coverageTestObject.getPropertyChangeSupport()
-                        .removePropertyChangeListener(coverageTestObjectListener);
+                coverageTestObject.getPropertyChangeSupport().removePropertyChangeListener(coverageTestObjectListener);
                 coverageTestObject = new CoverageTestObject(false, getAbstractRadio(), to.getName());
-                coverageTestObject.getPropertyChangeSupport()
-                        .addPropertyChangeListener(coverageTestObjectListener);
+                coverageTestObject.getPropertyChangeSupport().addPropertyChangeListener(coverageTestObjectListener);
                 database.close();
                 if (!from.renameTo(to)) {
                 	final String s = to.getAbsolutePath();
@@ -4226,7 +4233,7 @@ public class SignalTrack extends JFrame {
             fixedTimer.setDelay(coverageTestObject.getFixedTimePeriod());
             fixedTimer.start();
         } else if (coverageTestObject.getTimingMode() == TimingMode.VARIABLE) {
-            variableTimer.setDelay((int) getVariableTimePeriod(coverageTestObject.getTileSize().getY(),
+            variableTimer.setDelay((int) getVariableTimePeriod(coverageTestObject.getTileSizeDegrees().getY(),
                     gpsProcessor.getSpeedMadeGoodKPH(), coverageTestObject.getMinSamplesPerTile()));
             variableTimer.start();
         } else if (getPositionSource() == PositionSource.MANUAL) {
@@ -4471,6 +4478,7 @@ public class SignalTrack extends JFrame {
             coverageTestObject.setAllowModifications(true);
             coverageTestObject.setShapesEnabled(false);
         }
+        
         invokeLaterInDispatchThreadIfNeeded(() -> {
             learnModeButton.setSelected(false);
             doActionButton.setVisible(false);
@@ -4552,7 +4560,7 @@ public class SignalTrack extends JFrame {
         invokeLaterInDispatchThreadIfNeeded(() -> totalTiles.setText(String.format(getLocale(), "%07d", event.getNewValue())));
     }
 
-    private synchronized void tileRecordReadyEvent() {
+    private synchronized void tileRecordRestoredEvent() {
         tileRecordRestoreProgress++;
         if (tileRecordRestoreProgress == tileRecordCount) {
             allTileRecordsReady();
@@ -4563,25 +4571,21 @@ public class SignalTrack extends JFrame {
         final Point2D tileSize = coverageTestObject.getTileSizeArcSeconds();
         final Point2D gridRef = coverageTestObject.getGridReference();
         final Point2D gridSize = coverageTestObject.getGridSize();
-        final Point2D corner = CoordinateUtils.lonLatToLowerLeftCornerOfTile(lonLat, tileSize, gridRef, gridSize);
-        return database.getTestTileAt(corner);
+        final Point2D corner = CoordinateUtils.lonLatFromAnywhereInTileToNorthWestCornerOfTile(lonLat, tileSize, gridRef, gridSize);
+        return database.getTestTileWithThisNorthWestLonLat(corner);
     }
 
-    private synchronized void tileTableAppendedEvent(final PropertyChangeEvent event) {
+    private synchronized void tileAddedToTileTableEvent(final PropertyChangeEvent event) {
         final int total = database.getTileRecordList().size();
         final TestTile testTile = (TestTile) event.getNewValue();
         invokeLaterInDispatchThreadIfNeeded(() -> totalTiles.setText(String.format(getLocale(), "%07d", total)));
         final String str = String.format(getLocale(), "Tile # %1d appended to database: %2s", total,
                 database.getConfig().getDatabaseFile().getName());
         LOG.log(Level.INFO, str);
-        System.out.println(str);
         testTile.setColor(getTestTileColor(0));
         abstractMap.addTestTile(testTile);
         abstractMap.setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
         updateTestTileStats(testTile);
-        if (Boolean.TRUE.equals(isDebug())) {
-            invokeLaterInDispatchThreadIfNeeded(() -> abstractMap.setTileFlash(testTile.getID(), true));
-        }
     }
 
     private void triangulationComplete() {
@@ -4595,7 +4599,7 @@ public class SignalTrack extends JFrame {
         abstractMap.showIconLabels(getAprsProcessor().isEnableIconLabels());
     }
 
-    public boolean isTestGridLearnMode() {
+    public boolean isTestTileSelectMode() {
         return testGridLearnMode;
     }
 
@@ -4628,8 +4632,8 @@ public class SignalTrack extends JFrame {
             if ((getDataMode() != DataMode.RECORD) && (getDatabaseMode() == DatabaseMode.OPEN)) {
                 setDataMode(DataMode.RECORD);
             }
-            invokeLaterInDispatchThreadIfNeeded(() -> messageLabel.setText("       TEST ROUTE LEARN MODE ACTIVE"));
-            abstractMap.setSelectionRectangleMode(true);
+            invokeLaterInDispatchThreadIfNeeded(() -> messageLabel.setText("       TEST GRID LEARN MODE ACTIVE"));
+            abstractMap.setSelectionRectangleMode(false);
             coverageTestObject.setAllowModifications(false);
             coverageTestObject.setShapesEnabled(true);
         } else {
@@ -4637,20 +4641,20 @@ public class SignalTrack extends JFrame {
         }
     }
 
-    public boolean isTestGridSelectionMode() {
+    public boolean isTestGridDrawOutlineMode() {
         return testGridSelectionMode;
     }
 
     private void setTestGridSelectionMode(final PropertyChangeEvent event) {
-        setTestGridSelectionMode((boolean) event.getNewValue());
+        setTestGridDrawOutlineMode((boolean) event.getNewValue());
     }
 
     // sets test grid boundaries
-    private void setTestGridSelectionMode(boolean testGridSelectionMode) {
+    private void setTestGridDrawOutlineMode(boolean testGridSelectionMode) {
         this.testGridSelectionMode = testGridSelectionMode;
         if (testGridSelectionMode) {
             invokeLaterInDispatchThreadIfNeeded(() -> {
-                messageLabel.setText("       TEST GRID SELECTION MODE");
+                messageLabel.setText("       TEST GRID OUTLINE MODE");
                 abstractMap.deleteTestGrid();
                 doActionButton.setText("Apply Test Grid");
                 doActionButton.setToolTipText("Press to apply test grid boundaries");
@@ -4777,46 +4781,60 @@ public class SignalTrack extends JFrame {
     }
 
     private TestMode getCoverageTestMode() {
-        TestMode tm = TestMode.MODE_NOT_SELECTED;
+        TestMode testMode = TestMode.MODE_NOT_SELECTED;
         if (getAbstractRadio().isRssiEnabled()) {
             if (getAbstractRadio().isBerEnabled()) {
-                tm = TestMode.RSSI_BER;
+                testMode = TestMode.RSSI_BER;
             } else if (getAbstractRadio().isSinadEnabled()) {
-                tm = TestMode.RSSI_SINAD;
+                testMode = TestMode.RSSI_SINAD;
             } else {
-                tm = TestMode.RSSI;
+                testMode = TestMode.RSSI;
             }
         } else if (getAbstractRadio().isBerEnabled()) {
-            tm = TestMode.BER;
+            testMode = TestMode.BER;
         } else if (getAbstractRadio().isSinadEnabled()) {
-            tm = TestMode.SINAD;
+            testMode = TestMode.SINAD;
         }
-        return tm;
+        return testMode;
     }
 
     private void doActionButtonMousePressed() {
-        if (isTestGridSelectionMode()) {
-            coverageTestComponent.setTestGridBoundaries(abstractMap.getSelectionRectangle());
+    	// The test grid outline has been drawn, and lower right point has been selected. Now it is to be submitted.
+        if (isTestGridDrawOutlineMode()) { 
+        	// update coverageTestComponent with drive test outer boundaries selection
+            coverageTestComponent.setTestGridBoundaries(abstractMap.getSelectionRectangle()); 
+            // draw the grid squares inside the boundaries
             abstractMap.setGrid(coverageTestObject.getTileSizeArcSeconds(),
                     coverageTestObject.getGridReference(), coverageTestObject.getGridSize());
             invokeLaterInDispatchThreadIfNeeded(() -> {
                 if (coverageTestComponent != null && !learnModeButton.isSelected()) {
+                	// show the coverageTestComponent grid squares
                     coverageTestComponent.setVisible(true);
                 }
+                // change the cursor back to an arrow
                 abstractMap.setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
+                // hide the button, and clear the message text, as the task of drawing the test grid is complete
                 doActionButton.setVisible(false);
                 messageLabel.setText("");
                 doActionButton.setToolTipText("");
             });
-            abstractMap.showGrid(true);
+            // show the grid
+            coverageTestObject.showGrid(true);
+            abstractMap.showGrid(coverageTestObject.isShowGrid());
+            coverageTestObject.showGridSquareShading(true);
+            // show any map shapes that have been selected
             abstractMap.setDisplayShapes(true);
-            coverageTestObject.setShowGrid(true);
+            // we don't need to see the selection rectangle any longer
             abstractMap.setSelectionRectangleMode(false);
-            setTestGridSelectionMode(false);
+            setTestGridDrawOutlineMode(false);
             setMapDragged(false);
         }
-        if (isTestGridLearnMode()) {
-            final List<Coordinate> coordinates = GeometryUtils.getTestTilesWithinRectangle(abstractMap.getSelectionRectangle(), coverageTestObject.getGridList());
+        // User is selecting which tiles within the grid are to be tested. 
+        if (isTestTileSelectMode()) {
+        	// here we are creating a collection of the southwest coordinates the of all the tiles inside the boundary rectangle
+            final List<Coordinate> coordinates = GeometryUtils.getSouthWestCoordinatesOfAllTestTilesWithinRectangle(abstractMap.getSelectionRectangle(), coverageTestObject.getGridList());
+            // Now we are creating a blank test tile in the database for each member of the above collection.
+            // The receiving method, "createBlankTestTile" 
             coordinates.forEach(this::createBlankTestTile);
             invokeLaterInDispatchThreadIfNeeded(() -> {
                 doActionButton.setVisible(false);
@@ -4829,8 +4847,8 @@ public class SignalTrack extends JFrame {
             });
             setMapDragged(false);
         }
-        if (isBulkDownloadSelectionMode()) {
-            setBulkDownloadSelectionMode(false);
+        if (isBulkMapTileDownloadSelectionMode()) {
+            setBulkMapTileDownloadSelectionMode(false);
             abstractMap.setSelectionRectangleMode(false);
             invokeLaterInDispatchThreadIfNeeded(() -> {
                 doActionButton.setVisible(false);
@@ -5163,11 +5181,11 @@ public class SignalTrack extends JFrame {
         measureButton.setSelected(measureMode);
     }
 
-    public boolean isBulkDownloadSelectionMode() {
+    public boolean isBulkMapTileDownloadSelectionMode() {
         return bulkDownloadSelectionMode;
     }
 
-    public void setBulkDownloadSelectionMode(boolean bulkDownloadSelectionMode) {
+    public void setBulkMapTileDownloadSelectionMode(boolean bulkDownloadSelectionMode) {
         this.bulkDownloadSelectionMode = bulkDownloadSelectionMode;
     }
 

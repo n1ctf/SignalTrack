@@ -3,7 +3,10 @@ package map;
 import java.awt.Graphics;
 import java.awt.Point;
 import java.awt.Polygon;
+import java.awt.geom.Point2D;
 import java.util.List;
+
+import org.jxmapviewer.Style;
 
 import geometry.ICoordinate;
 
@@ -36,4 +39,8 @@ public interface MapPolygon extends MapObject {
      * @param polygon polygon to draw
      */
     void paint(Graphics g, Polygon polygon);
+    
+    void setStyle(Style style);
+    
+    Point2D getNorthWestLonLat();
 }

@@ -10,6 +10,7 @@ import java.awt.Point;
 import java.awt.Polygon;
 import java.awt.Rectangle;
 import java.awt.Stroke;
+import java.awt.geom.Point2D;
 import java.util.Arrays;
 import java.util.List;
 
@@ -69,9 +70,7 @@ public class MapPolygonImpl extends MapObjectImpl implements MapPolygon {
     @Override
     public void paint(Graphics g, List<Point> points) {
         final Polygon polygon = new Polygon();
-        for (final Point p : points) {
-            polygon.addPoint(p.x, p.y);
-        }
+        points.forEach((final Point p) -> polygon.addPoint(p.x, p.y));
         paint(g, polygon);
     }
 
@@ -82,15 +81,13 @@ public class MapPolygonImpl extends MapObjectImpl implements MapPolygon {
         g.setColor(getColor());
 
         Stroke oldStroke = null;
-        if (g instanceof Graphics2D) {
-            final Graphics2D g2 = (Graphics2D) g;
+        if (g instanceof Graphics2D g2) {
             oldStroke = g2.getStroke();
             g2.setStroke(getStroke());
         }
         // Draw
         g.drawPolygon(polygon);
-        if ((g instanceof Graphics2D) && (getBackColor() != null)) {
-            final Graphics2D g2 = (Graphics2D) g;
+        if ((g instanceof Graphics2D g2) && (getBackColor() != null)) {
             final Composite oldComposite = g2.getComposite();
             g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER));
             g2.setPaint(getBackColor());
@@ -99,8 +96,8 @@ public class MapPolygonImpl extends MapObjectImpl implements MapPolygon {
         }
         // Restore graphics
         g.setColor(oldColor);
-        if (g instanceof Graphics2D) {
-            ((Graphics2D) g).setStroke(oldStroke);
+        if (g instanceof Graphics2D g2d) {
+            g2d.setStroke(oldStroke);
         }
         final Rectangle rec = polygon.getBounds();
         final Point corner = rec.getLocation();
@@ -110,6 +107,21 @@ public class MapPolygonImpl extends MapObjectImpl implements MapPolygon {
         }
     }
 
+    @Override
+    public Point2D getNorthWestLonLat() {
+    	double northLat = 0;
+    	double westLon = 0;
+    	for (ICoordinate coord : points) {
+    		if (coord.getLat() > northLat) {
+    			northLat = coord.getLat();
+    		}
+    		if (coord.getLon() < westLon) {
+    			westLon = coord.getLon();
+    		}
+    	}
+    	return new Point2D.Double(westLon, northLat);
+    }
+    
     public static Style getDefaultStyle() {
         return new Style(Color.BLUE, new Color(100, 100, 100, 50), new BasicStroke(2), getDefaultFont());
     }

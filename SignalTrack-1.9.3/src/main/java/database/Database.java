@@ -79,11 +79,11 @@ public class Database implements AutoCloseable {
     public static final String MEASUREMENT_TABLE = "MEASUREMENT_TABLE";
     public static final String MEASUREMENT_SET_TABLE = "MEASUREMENT_SET_TABLE";
 
-    public static final String TILE_TABLE_APPENDED = "TILE_TABLE_APPENDED";
+    public static final String TILE_ADDED_TO_TILE_TABLE = "TILE_TABLE_APPENDED";
     public static final String MEASUREMENT_SET_RECORD_APPENDED = "MEASUREMENT_SET_RECORD_APPENDED";
     public static final String MEASUREMENT_RECORD_APPENDED = "MEASUREMENT_RECORD_APPENDED";
 
-    public static final String TILE_RECORD_READY = "TILE_RECORD_READY";
+    public static final String TILE_RECORD_RESTORED = "TILE_RECORD_READY";
     public static final String MEASUREMENT_SET_RECORD_READY = "MEASUREMENT_SET_RECORD_READY";
     public static final String MEASUREMENT_RECORD_READY = "MEASUREMENT_RECORD_READY";
     public static final String ALL_MEASUREMENT_RECORDS_READY = "ALL_MEASUREMENT_RECORDS_READY";
@@ -150,7 +150,7 @@ public class Database implements AutoCloseable {
         
         @Override
         public synchronized void run() {
-            try (Connection conn = dataSource.getConnection() ) {
+            try (Connection conn = dataSource.getConnection()) {
                 allMeasurementRecordsRetrieved = false;
                 allStaticRecordsRetrieved = false;
                 
@@ -215,6 +215,8 @@ public class Database implements AutoCloseable {
 
                 pcs.firePropertyChange(DATABASE_OPEN, null, true);
 
+                notifyAll();
+                
             } catch (SQLException ex) {
                 LOG.log(Level.WARNING, "SQLException", ex);
             } catch (NullPointerException ex) {
@@ -222,8 +224,6 @@ public class Database implements AutoCloseable {
             } catch (Exception ex) {
                 LOG.log(Level.WARNING, "Exception", ex);
             }
-
-            notifyAll();
         }
 
         private List<String> listTables(Connection conn) {
@@ -449,7 +449,7 @@ public class Database implements AutoCloseable {
         if (tileRecordList == null) {
             return false;
         }
-        final TestTile tt = getTestTileAt(testTile.getLonLat());
+        final TestTile tt = getTestTileWithThisNorthWestLonLat(testTile.getNorthWestLonLat());
         return tt != null;
     }
 
@@ -457,24 +457,24 @@ public class Database implements AutoCloseable {
         if (tileRecordList == null) {
             return null;
         }
-        return getTestTileAt(testTile.getLonLat());
+        return getTestTileWithThisNorthWestLonLat(testTile.getNorthWestLonLat());
     }
 
-    public synchronized TestTile getTestTileAt(Point2D lonlat) {
+    public synchronized TestTile getTestTileWithThisNorthWestLonLat(Point2D lonlat) {
         if (tileRecordList == null || lonlat == null) {
             return null;
         }
         final Iterator<TestTile> iter = tileRecordList.iterator();
         while (iter.hasNext()) {
         	final TestTile testTile = iter.next();
-            if (getPointPrecision(testTile.getLonLat(), 4).equals(getPointPrecision(lonlat, 4))) {
+            if (getLonLatCoordinatePrecision(testTile.getNorthWestLonLat(), 4).equals(getLonLatCoordinatePrecision(lonlat, 4))) {
                 return testTile;
             }
         }
         return null;
     }
 
-    private synchronized Point2D getPointPrecision(Point2D point, Integer precision) {
+    private synchronized Point2D getLonLatCoordinatePrecision(Point2D point, Integer precision) {
     	final double x = Utility.round(point.getX(), precision);
     	final double y = Utility.round(point.getY(), precision);
         return new Point.Double(x, y);
@@ -511,7 +511,7 @@ public class Database implements AutoCloseable {
                 try (ResultSet resultSet = preparedStatement.executeQuery()) {
 	                while (resultSet.next()) {
 	                	final TestTile testTile = TestTile.toTestTile(getRecordData(resultSet));
-	                    pcs.firePropertyChange(TILE_RECORD_READY, null, testTile);
+	                    pcs.firePropertyChange(TILE_RECORD_RESTORED, null, testTile);
 	                    tileRecordList.add(testTile);
 	                    requestAllMeasurementSetRecords(testTile);
 	                }
@@ -852,15 +852,15 @@ public class Database implements AutoCloseable {
                 preparedStatement.setLong(3, testTile.getEasting());
                 preparedStatement.setLong(4, testTile.getNorthing());
                 preparedStatement.setInt(5, testTile.getGridZone());
-                preparedStatement.setDouble(6, testTile.getLonLat().getX());
-                preparedStatement.setDouble(7, testTile.getLonLat().getY());
+                preparedStatement.setDouble(6, testTile.getNorthWestLonLat().getX());
+                preparedStatement.setDouble(7, testTile.getNorthWestLonLat().getY());
                 preparedStatement.setInt(8, testTile.getPrecision().ordinal());
                 preparedStatement.setString(9, testTile.getLatBand());
                 preparedStatement.setDouble(10, testTile.getAvgSinad());
                 preparedStatement.setDouble(11, testTile.getAvgBer());
                 preparedStatement.setDouble(12, testTile.getAvgdBm());
-                preparedStatement.setDouble(13, testTile.getTileSize().getX());
-                preparedStatement.setDouble(14, testTile.getTileSize().getY());
+                preparedStatement.setDouble(13, testTile.getTileSizeInDegrees().getX());
+                preparedStatement.setDouble(14, testTile.getTileSizeInDegrees().getY());
                 preparedStatement.setInt(15, testTile.getMeasurementCount());
                 preparedStatement.setBoolean(16, testTile.isAccessable());
                 preparedStatement.setInt(17, testTile.getID());
@@ -964,7 +964,7 @@ public class Database implements AutoCloseable {
     	final long northing = testTile.getNorthing();
     	final int gridZone = testTile.getGridZone();
     	final String latBand = testTile.getLatBand();
-    	final Point2D lonlat = testTile.getLonLat();
+    	final Point2D lonlat = testTile.getNorthWestLonLat();
 
     	final Iterator<TestTile> iter = tileRecordList.iterator();
 
@@ -972,8 +972,8 @@ public class Database implements AutoCloseable {
         	final TestTile tt = iter.next();
             if ((tt.getTestName().equals(testName) && (tt.getEasting() == easting) && (tt.getNorthing() == northing)
                     && (tt.getGridZone() == gridZone) && tt.getLatBand().equals(latBand))
-                    || getPointPrecision(tt.getLonLat(), 4).equals(getPointPrecision(lonlat, 4))) {
-                pcs.firePropertyChange(TILE_RECORD_READY, null, tt);
+                    || getLonLatCoordinatePrecision(tt.getNorthWestLonLat(), 4).equals(getLonLatCoordinatePrecision(lonlat, 4))) {
+                pcs.firePropertyChange(TILE_RECORD_RESTORED, null, tt);
                 return;
             }
         }
@@ -1006,13 +1006,13 @@ public class Database implements AutoCloseable {
                 conn.setAutoCommit(true);
 
                 preparedStatement.setString(1, testSettings.getTestName());
-                preparedStatement.setDouble(2, Utility.round(testTile.getLonLat().getX(), 4));
-                preparedStatement.setDouble(3, Utility.round(testTile.getLonLat().getY(), 4));
+                preparedStatement.setDouble(2, Utility.round(testTile.getNorthWestLonLat().getX(), 4));
+                preparedStatement.setDouble(3, Utility.round(testTile.getNorthWestLonLat().getY(), 4));
 
                 try (ResultSet resultSet = preparedStatement.executeQuery()) {
 	                if (resultSet.next()) {
 	                	final TestTile testTileDataType = TestTile.toTestTile(getRecordData(resultSet));
-	                    pcs.firePropertyChange(TILE_RECORD_READY, null, testTileDataType);
+	                    pcs.firePropertyChange(TILE_RECORD_RESTORED, null, testTileDataType);
 	                } else {
 	                    pcs.firePropertyChange(TILE_NOT_FOUND, null, testTile);
 	                }
@@ -1055,7 +1055,7 @@ public class Database implements AutoCloseable {
                 try (ResultSet resultSet = preparedStatement.executeQuery()) {
 	                if (resultSet.next()) {
 	                	final TestTile testTileDataType = TestTile.toTestTile(getRecordData(resultSet));
-	                    pcs.firePropertyChange(TILE_RECORD_READY, null, testTileDataType);
+	                    pcs.firePropertyChange(TILE_RECORD_RESTORED, null, testTileDataType);
 	                } else {
 	                    pcs.firePropertyChange(TILE_NOT_FOUND, null, testTile);
 	                }
@@ -1112,7 +1112,7 @@ public class Database implements AutoCloseable {
         }
     }
 
-    public synchronized void appendTileRecord(TestTile testTile) {
+    public synchronized void appendTileRecordWithThisNorthWestCoordinateReference(TestTile testTile) {
         executor.execute(new AppendTileRecord(testTile));
     }
 
@@ -1159,15 +1159,15 @@ public class Database implements AutoCloseable {
                 preparedStatement.setLong(3, testTile.getEasting());
                 preparedStatement.setLong(4, testTile.getNorthing());
                 preparedStatement.setInt(5, testTile.getGridZone());
-                preparedStatement.setDouble(6, testTile.getLonLat().getX());
-                preparedStatement.setDouble(7, testTile.getLonLat().getY());
+                preparedStatement.setDouble(6, testTile.getNorthWestLonLat().getX());
+                preparedStatement.setDouble(7, testTile.getNorthWestLonLat().getY());
                 preparedStatement.setInt(8, testTile.getPrecision().ordinal());
                 preparedStatement.setString(9, testTile.getLatBand());
                 preparedStatement.setDouble(10, testTile.getAvgSinad());
                 preparedStatement.setDouble(11, testTile.getAvgBer());
                 preparedStatement.setDouble(12, testTile.getAvgdBm());
-                preparedStatement.setDouble(13, testTile.getTileSize().getX());
-                preparedStatement.setDouble(14, testTile.getTileSize().getY());
+                preparedStatement.setDouble(13, testTile.getTileSizeInDegrees().getX());
+                preparedStatement.setDouble(14, testTile.getTileSizeInDegrees().getY());
                 preparedStatement.setInt(15, testTile.getMeasurementCount());
                 preparedStatement.setBoolean(16, testTile.isAccessable());
 
@@ -1180,8 +1180,10 @@ public class Database implements AutoCloseable {
                 }
 
                 tileRecordList.add(testTile);
+                
+                conn.commit();
 
-                pcs.firePropertyChange(TILE_TABLE_APPENDED, null, testTile);
+                pcs.firePropertyChange(TILE_ADDED_TO_TILE_TABLE, null, testTile);
             } catch (SQLException ex) {
                 LOG.log(Level.WARNING, "SQLException", ex);
             }
@@ -1369,10 +1371,11 @@ public class Database implements AutoCloseable {
         			try {
         				LOG.log(Level.INFO, "Initializing Database executor Service termination....");
         				executor.shutdown();
-        				executor.awaitTermination(20, TimeUnit.SECONDS);
+        				executor.awaitTermination(3, TimeUnit.SECONDS);
         				LOG.log(Level.INFO, "Database executor Service has gracefully terminated");
         			} catch (InterruptedException e) {
-        				LOG.log(Level.SEVERE, "Dtabase executorService has timed out after 20 seconds of waiting to terminate processes.");
+        				executor.shutdownNow();
+        				LOG.log(Level.SEVERE, "Database executorService has timed out after 3 seconds of waiting to terminate processes.");
         				Thread.currentThread().interrupt();
         			}
         		}

@@ -88,8 +88,7 @@ public class DatabaseConfig {
 		return switch (driver) {
 			case 0 -> "jdbc:mysql://" + inetAddress.getHostAddress() + ":" + port + 
 					File.pathSeparator + databaseFile.getName().replace("\\", File.pathSeparator).replace(".sql",  "");
-			case 1 -> "jdbc:derby:codejava/webdb1;create=true";
-					//"jdbc:derby:" + databaseFile.getPath() + ";create=true";
+			case 1 -> "jdbc:derby:" + databaseFile.getPath() + ";create=true";
 			case 2 -> "jdbc:oracle:oci:@" + inetAddress.getHostAddress() + 
 					":" + port + ":" + databaseFile.getName().replace("\\", File.pathSeparator).replace(".sql",  "");
 			case 3 -> "jdbc:oracle:thin:@" + inetAddress.getHostAddress() + 
@@ -142,7 +141,7 @@ public class DatabaseConfig {
 	
     public static String getNewDatabaseName() {
     	final SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMddHHmmss");
-		return sdf.format(Calendar.getInstance().getTime()) + ".sql";
+		return sdf.format(Calendar.getInstance().getTime()) + ".ct.sql";
     }
     
 	private void getSettingsFromRegistry() {

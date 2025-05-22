@@ -63,7 +63,7 @@ import org.jxmapviewer.viewer.empty.EmptyTileFactory;
  * @author Joshua.Marinacci@sun.com
  */
 public class JXMapViewer extends JPanel implements DesignMode {
-	private static final long serialVersionUID = -3530746298586937321L;
+	private static final long serialVersionUID = -1L;
 
 	/**
 	 * The zoom level. Generally a value between 1 and 15 (TODO Is this true for all
