@@ -17,7 +17,7 @@ import time.ConsolidatedTime;
  *
  * @author John R.Chartkoff
  */
-public class AprsWeatherPositGenerator {
+public class AprsPositGenerator {
 	
     public static final String ULTW_HEADER = "$ULTW";
     public static final String DATA_LOGGER_HEADER = "!!";
@@ -25,21 +25,111 @@ public class AprsWeatherPositGenerator {
     public static final String DEFAULT_APRS_SYMBOL_TABLE_ID = "/";
     public static final String DEFAULT_APRS_SYMBOL_CODE = "_";
     public static final String DEFAULT_APP_NAME = "SIGNALTRACK-1.9.3_Ecowitt-WS90";
+    public static final String DEFAULT_COMMENT = "";
     
-	private static final Logger LOG = Logger.getLogger(AprsWeatherPositGenerator.class.getName());
+	private static final Logger LOG = Logger.getLogger(AprsPositGenerator.class.getName());
 	
     private final AbstractEnvironmentSensor aes;
     
-    public AprsWeatherPositGenerator(AbstractEnvironmentSensor aes) {
+    public AprsPositGenerator(AbstractEnvironmentSensor aes) {
         this.aes = aes;
     }
     
-    public String getAprsTNCWeatherReportString() {
-        return getAprsRfWeatherReportString(DEFAULT_APRS_SYMBOL_TABLE_ID, DEFAULT_APRS_SYMBOL_CODE);
+    public String getAprsRFPositionReportString(double latitude, double longitude) {
+        return getAprsRFPositionReportString(DEFAULT_APRS_SYMBOL_TABLE_ID, DEFAULT_APRS_SYMBOL_CODE, latitude, longitude, DEFAULT_COMMENT);
     }
     
-    public String getAprsTNCHTMLString() {
-        return getAprsRfHTMLString(DEFAULT_APRS_SYMBOL_TABLE_ID, DEFAULT_APRS_SYMBOL_CODE);
+    public String getAprsRFPositionReportString() {
+        return getAprsRFPositionReportString(DEFAULT_APRS_SYMBOL_TABLE_ID, DEFAULT_APRS_SYMBOL_CODE, aes.getStationLatitudeDegrees(), aes.getStationLongitudeDegrees(), DEFAULT_COMMENT);
+    }
+    
+    public String getAprsRFHTMLPositionReportString(double latitude, double longitude) {
+        return getAprsRFHTMLPositionReportString(DEFAULT_APRS_SYMBOL_TABLE_ID, DEFAULT_APRS_SYMBOL_CODE, latitude, longitude, DEFAULT_COMMENT);
+    }
+    
+    public String getAprsRFHTMLPositionReportString() {
+        return getAprsRFHTMLPositionReportString(DEFAULT_APRS_SYMBOL_TABLE_ID, DEFAULT_APRS_SYMBOL_CODE, aes.getStationLatitudeDegrees(), aes.getStationLongitudeDegrees(), DEFAULT_COMMENT);
+    }
+    
+    public String getAprsRFPositionReportString(String symbolTableId, String symbolCode, double latitude, double longitude, String comment) {
+        final StringBuilder bld = new StringBuilder();
+        
+        bld.append(APRS_RF_COMPLETE_HEADER);
+        
+        final String time = toAprsHourMinuteSecondUTC(aes.getZonedDateTimeUTC());
+        
+        bld.append(time);
+        bld.append(degreesLatitudeToGPSFormat(latitude)); 
+        bld.append(symbolTableId);
+        bld.append(degreesLongitudeToGPSFormat(longitude)); 
+        bld.append(symbolCode);
+        bld.append(comment);
+        bld.append("\r\n");
+        
+        bld.trimToSize();
+		
+        LOG.log(Level.INFO, "{0} {1} {2} {3} {4} {5} {6} {7} {8} {9}",
+            new Object[]{
+                "\n--------------------- APRS RF Position Report  ---------------------",
+                
+                "\n   Header:                            " + bld.substring(0, 1),
+                "\n   HH MM SS :                         " + bld.substring(1, 8),
+                "\n   Latitude :                         " + bld.substring(8, 16),
+                "\n   Symbol ID :                        " + bld.substring(16, 17),
+                "\n   Longitude :                        " + bld.substring(17, 26),
+                "\n   Symbol Code :                      " + bld.substring(26, 27),
+                "\n   Comment :                          " + bld.substring(27, 27 + comment.length()),
+                
+                "\n   Complete String :                  " + bld.toString(),
+                
+                "\n-------------------- End APRS RF Position Report ------------------"});
+        
+        return bld.toString();
+    }
+    
+    public String getAprsRFHTMLPositionReportString(String symbolTableId, String symbolCode, double latitude, double longitude, String comment) {
+    	final String time = toAprsHourMinuteSecondUTC(aes.getZonedDateTimeUTC());
+
+        
+    	final StringBuilder html = new StringBuilder("<HTML>");
+    
+    	html.append("APRS RF POSITION REPORT TRANSMITTED TO MODEM at ");
+        html.append(time);
+        html.append("<br>");
+		
+		html.append("&emsp;Latitude: ");
+		html.append(degreesLatitudeToGPSFormat(latitude));
+		html.append("<br>");
+		
+		html.append("&emsp;Longitude: ");
+		html.append(degreesLongitudeToGPSFormat(longitude));
+		html.append("<br>");
+		
+		html.append("&emsp;Symbol Table ID: ");
+		html.append(symbolTableId);
+		html.append("<br>");
+		
+		html.append("&emsp;Symbol Code: ");
+		html.append(symbolCode);
+		html.append("<br>");
+
+		html.append("&emsp;Comment: ");
+		html.append(comment);
+		html.append("<br>");
+		
+		html.append("</HTML>");
+		
+		html.trimToSize();
+		
+		return html.toString();
+    }
+    
+    public String getAprsRFWeatherReportString() {
+        return getAprsRFWeatherReportString(DEFAULT_APRS_SYMBOL_TABLE_ID, DEFAULT_APRS_SYMBOL_CODE);
+    }
+    
+    public String getAprsRFHTMLWeatherReportString() {
+        return getAprsRFHTMLWeatherReportString(DEFAULT_APRS_SYMBOL_TABLE_ID, DEFAULT_APRS_SYMBOL_CODE);
     }
     
     //  --- APRS Complete Weather Report Definition ---
@@ -60,7 +150,7 @@ public class AprsWeatherPositGenerator {
     //          Or, 456 is 45 * 10^6 nanosieverts/hr or 45 millisieverts/hr
 	//		# = raw rain counter
     
-    public String getAprsRfWeatherReportString(String symbolTableId, String symbolCode) {
+    public String getAprsRFWeatherReportString(String symbolTableId, String symbolCode) {
         final StringBuilder bld = new StringBuilder();
         
         bld.append(APRS_RF_COMPLETE_HEADER);
@@ -127,7 +217,7 @@ public class AprsWeatherPositGenerator {
         return bld.toString();
     }
 
-    public String getAprsRfHTMLString(String symbolTableId, String symbolCode) {
+    public String getAprsRFHTMLWeatherReportString(String symbolTableId, String symbolCode) {
     	final String time = toAprsHourMinuteSecondUTC(aes.getZonedDateTimeUTC());
     	final int windDirectionTrue = aes.getWindDirectionTrue();
     	final double currentWindSpeed = aes.getCurrentWindSpeed(SpeedUnit.MPH);
@@ -141,7 +231,7 @@ public class AprsWeatherPositGenerator {
     	final double gammaRadiationMicroSievertsPerHour = aes.getGammaRadiationMicroSievertsPerHour();
         
     	final StringBuilder html = new StringBuilder("<HTML>");
-        html.append("APRS RF REPORT TRANSMITTED TO MODEM at ");
+        html.append("APRS RF WEATHER REPORT TRANSMITTED TO MODEM at ");
         html.append(time);
         html.append("<br>");
 		
@@ -218,7 +308,7 @@ public class AprsWeatherPositGenerator {
     	return wm2 >= 1 ? "l" + str.substring(0,3) : "L" + str.substring(1,4);
     }
     
-    public String getAprsIsWeatherReportString(String callSign) {
+    public String getAprsISWeatherReportString(String callSign) {
 	    // YOURCALLSIGN-6>APRS:=XXXX.XXN/XXXXX.XXE_.../...g...t70r...p...P...h57b.....L....ESPTEST
     	final StringBuilder bld = new StringBuilder(callSign);
 	    bld.append(">APRS:=");
@@ -267,6 +357,88 @@ public class AprsWeatherPositGenerator {
                     "\n-------------------- End APRS IS Weather Report ------------------"});
 	    
 	    return bld.toString();
+    }
+    
+    public String getAprsISHTMLWeatherReportString(String callSign) {
+    	final String time = toAprsHourMinuteSecondUTC(aes.getZonedDateTimeUTC());
+    	    	
+    	final int windDirectionTrue = aes.getWindDirectionTrue();
+    	final double currentWindSpeed = aes.getCurrentWindSpeed(SpeedUnit.MPH);
+    	final double gustingWindSpeed = aes.getPeakPeriodicWindSpeedMeasurement(5, SpeedUnit.MPH);
+    	final double tempExteriorFahrenheit = aes.getTempExteriorFahrenheit();
+    	final double rainfallInchesLastHour = Meteorology.convertMillimetersToInches(aes.getRainfallMillimetersLastHour());
+    	final double rainfallInchesLast24Hours = Meteorology.convertMillimetersToInches(aes.getRainfallMillimetersLast24Hours());
+    	final double rainThisDayTotalInches = Math.round(aes.getDailyRainInches());
+    	final int exteriorHumidity = aes.getExteriorHumidity();
+    	final double barometricPressureRelativeHPA = aes.getBarometricPressureRelativeHPA();
+    	final double luminosityWM2 = aes.getLuminosityWM2();
+    	final String equipmentCode = aes.getEquipmentCode();
+        
+    	final StringBuilder html = new StringBuilder("<HTML>");
+        html.append("APRS IS WEATHER REPORT TRANSMITTED TO MODEM at ");
+        html.append(time);
+        html.append("<br>");
+		
+        html.append("&emsp;Call Sign: ");
+		html.append(callSign);
+		html.append("<br>");
+        
+		html.append("&emsp;Latitude: ");
+		html.append(degreesLatitudeToGPSFormat(aes.getStationLatitudeDegrees()));
+		html.append("<br>");
+		
+		html.append("&emsp;Longitude: ");
+		html.append(degreesLongitudeToGPSFormat(aes.getStationLongitudeDegrees()));
+		html.append("<br>");
+
+		html.append("&emsp;Wind Direction: ");
+		html.append(windDirectionTrue);
+		html.append("<br>");
+		
+		html.append("&emsp;Wind Speed MPH: ");
+		html.append(currentWindSpeed);
+		html.append("<br>");
+		
+		html.append("&emsp;Wind Speed 5 Min Peak MPH: ");
+		html.append(gustingWindSpeed);
+		html.append("<br>");
+		
+		html.append("&emsp;Exterior Temp Fahrenheit: ");
+		html.append(tempExteriorFahrenheit);
+		html.append("<br>");
+		
+		html.append("&emsp;Rain Last Hour Inches: ");
+		html.append(rainfallInchesLastHour);
+		html.append("<br>");
+		
+		html.append("&emsp;Rain Last 24 Hours Inches: ");
+		html.append(rainfallInchesLast24Hours);
+		html.append("<br>");
+		
+		html.append("&emsp;Rain This Calendar Day Total Inches: ");
+		html.append(rainThisDayTotalInches);
+		html.append("<br>");
+		
+		html.append("&emsp;Percent Humidity: ");
+		html.append(exteriorHumidity);
+		html.append("<br>");
+		
+		html.append("&emsp;Barometric Pressure mBars: ");
+		html.append(barometricPressureRelativeHPA);
+		html.append("<br>");
+		
+		html.append("&emsp;Luminosoty WM2: ");
+		html.append(luminosityWM2);
+		html.append("<br>");
+		
+		html.append("&emsp;Equipment Code: ");
+		html.append(equipmentCode);
+		
+		html.append("</HTML>");
+		
+		html.trimToSize();
+		
+		return html.toString();
     }
     
     //    DATA LOGGER MODE - RECORD STRUCTURE
@@ -473,7 +645,9 @@ public class AprsWeatherPositGenerator {
     		return "%s%s".formatted(Math.round(sieverts * 10000000), "2");
     	} else if (sieverts >= 0.0000001) {
     		return "%s%s".formatted(Math.round(sieverts * 100000000), "1");
-    	} else return "000";
+    	} else {
+    		return "000";
+    	}
     }
 
 }

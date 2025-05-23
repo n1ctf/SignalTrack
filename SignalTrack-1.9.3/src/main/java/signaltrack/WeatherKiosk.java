@@ -60,7 +60,7 @@ import org.apache.commons.lang3.ThreadUtils;
  *
  * @author John
  */
-public class WeatherKiosk {
+public class WeatherKiosk implements AutoCloseable {
 
 	private enum UserPrefs {
 		STATION_LATITUDE_DEGREES,
@@ -350,7 +350,8 @@ public class WeatherKiosk {
 		}
 	}
 
-	private void close() {
+	@Override
+	public void close() {
 		saveSettings();
 
 		if (consolidatedTime != null) {
@@ -399,7 +400,9 @@ public class WeatherKiosk {
 		
 		ThreadUtils.getAllThreads().forEach(t -> LOG.log(Level.INFO, "Thread Name: {0} , Is Daemon: {1}", new Object[] { t.getName(), t.isDaemon() }));
 		
-		System.out.println("Program complete.");
+		LOG.log(Level.INFO, "Program Complete");
+		
+		System.exit(0);
 	}
 
 	private void getSettings() {

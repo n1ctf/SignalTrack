@@ -24,8 +24,7 @@ public class DownloadJob implements DownloadConfigurationSaverIf {
 
 	public static final String TYPE = "Type";
 
-	public DownloadJob() {
-	}
+	public DownloadJob() {}
 
 	/**
 	 * constructor setting propertyFileName

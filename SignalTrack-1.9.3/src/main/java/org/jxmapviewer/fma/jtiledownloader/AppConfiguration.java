@@ -117,8 +117,7 @@ public final class AppConfiguration implements DownloadConfigurationSaverIf {
         _useProxyServer = Boolean.parseBoolean(prop.getProperty(USE_PROXY_SERVER, String.valueOf(_useProxyServer)));
         _proxyServer = prop.getProperty(PROXY_SERVER, _proxyServer);
         _proxyServerPort = prop.getProperty(PROXY_SERVER_PORT, _proxyServerPort);
-        _proxyServerRequireesAuthentitication = Boolean
-                .parseBoolean(prop.getProperty(USE_PROXY_SERVER_AUTH, String.valueOf(_proxyServerRequireesAuthentitication)));
+        _proxyServerRequireesAuthentitication = Boolean.parseBoolean(prop.getProperty(USE_PROXY_SERVER_AUTH, String.valueOf(_proxyServerRequireesAuthentitication)));
         _proxyServerUser = prop.getProperty(PROXY_SERVER_USER, _proxyServerUser);
         _proxyServerPassword = prop.getProperty(PROXY_SERVER_PASSWORD, _proxyServerPassword);
 
@@ -129,20 +128,16 @@ public final class AppConfiguration implements DownloadConfigurationSaverIf {
         setOutputFolder(prop.getProperty(LAST_OUTPUTFOLDER, _outputFolder));
 
         setDownloadThreads(Integer.parseInt(prop.getProperty(DOWNLOAD_THREADS, String.valueOf(getDownloadThreads()))));
-        setOverwriteExistingFiles(
-                Boolean.parseBoolean(prop.getProperty(OVERWRITE_EXISTING_FILES, String.valueOf(isOverwriteExistingFiles()))));
+        setOverwriteExistingFiles(Boolean.parseBoolean(prop.getProperty(OVERWRITE_EXISTING_FILES, String.valueOf(isOverwriteExistingFiles()))));
 
-        setMinimumAgeInDays(
-                Integer.parseInt(prop.getProperty(MINIMUM_AGE_IN_DAYS, String.valueOf(getMinimumAgeInDays()))));
+        setMinimumAgeInDays(Integer.parseInt(prop.getProperty(MINIMUM_AGE_IN_DAYS, String.valueOf(getMinimumAgeInDays()))));
 
-        setWaitAfterNrTiles(
-                Boolean.parseBoolean(prop.getProperty(WAIT_AFTER_NR_TILES, String.valueOf(isWaitingAfterNrOfTiles()))));
+        setWaitAfterNrTiles(Boolean.parseBoolean(prop.getProperty(WAIT_AFTER_NR_TILES, String.valueOf(isWaitingAfterNrOfTiles()))));
         setWaitSeconds(Integer.parseInt(prop.getProperty(WAIT_SECONDS, String.valueOf(getWaitSeconds()))));
         setWaitNrTiles(Integer.parseInt(prop.getProperty(WAIT_NR_TILES, String.valueOf(getWaitNrTiles()))));
 
         setInputPanelIndex(Integer.parseInt(prop.getProperty(INPUT_PANEL_INDEX, String.valueOf(getInputPanelIndex()))));
-        setTileSortingPolicy(
-                Integer.parseInt(prop.getProperty(TILE_SORTING_POLICY, String.valueOf(getTileSortingPolicy()))));
+        setTileSortingPolicy(Integer.parseInt(prop.getProperty(TILE_SORTING_POLICY, String.valueOf(getTileSortingPolicy()))));
     }
 
     /**

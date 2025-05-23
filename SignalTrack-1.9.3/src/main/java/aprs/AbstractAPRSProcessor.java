@@ -152,7 +152,7 @@ public abstract class AbstractAPRSProcessor implements AutoCloseable {
 					reportScheduler.awaitTermination(serviceTerminationWaitSeconds, TimeUnit.SECONDS);
 					serviceRunning.set(false);
 					LOG.log(Level.INFO, "AbstractAPRSOperator.ReportScheduler has gracefully terminated");
-				} catch (InterruptedException e) {
+				} catch (InterruptedException _) {
 					reportScheduler.shutdownNow();
 					LOG.log(Level.SEVERE, "AbstractAPRSOperator.ReportScheduler has timed out after {0} seconds of waiting to terminate processes.", serviceTerminationWaitSeconds);
 					Thread.currentThread().interrupt();

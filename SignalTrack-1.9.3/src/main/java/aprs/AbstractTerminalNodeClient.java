@@ -396,9 +396,9 @@ public abstract class AbstractTerminalNodeClient extends AbstractAPRSProcessor {
 	
 	@Override
 	public boolean sendUpdate() {
-		final AprsWeatherPositGenerator wpg = new AprsWeatherPositGenerator(aes);
-		updateString = wpg.getAprsTNCWeatherReportString();
-		htmlString = wpg.getAprsTNCHTMLString();
+		final AprsPositGenerator wpg = new AprsPositGenerator(aes);
+		updateString = wpg.getAprsRFWeatherReportString();
+		htmlString = wpg.getAprsRFHTMLWeatherReportString();
 		sendUpdate(updateString);
 		return true;
 	}

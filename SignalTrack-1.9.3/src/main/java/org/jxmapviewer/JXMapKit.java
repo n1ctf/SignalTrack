@@ -431,7 +431,7 @@ public class JXMapKit extends AbstractMap {
 		tileFactory = new DefaultTileFactory(tileFactoryInfo);
 
 		// Setup local file cache
-		cacheDir = new File(System.getProperty("user.home") + File.separator + ".jxmapviewer2"); //$NON-NLS-1$ //$NON-NLS-2$
+		cacheDir = new File(System.getProperty("user.home") + File.separator + ".jxmapviewer2" + File.separator + "tile.openstreetmap.org"); //$NON-NLS-1$ //$NON-NLS-2$
 		tileFactory.setLocalCache(new FileBasedLocalCache(cacheDir, false));
 		tileFactory.setTileCache(new TileCache());
 		new CachePreloader(cacheDir, tileFactory.getTileCache());

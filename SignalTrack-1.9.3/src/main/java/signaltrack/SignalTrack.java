@@ -495,7 +495,6 @@ public class SignalTrack extends JFrame {
     private transient Point2D mapCurrentCursor;
 
     private String gpsClassName;
-    private String tncClassName;
     private String environmentSensorClassName;
 
     private SignalTrackMapNames signalTrackMapName;
@@ -714,7 +713,7 @@ public class SignalTrack extends JFrame {
             	final Set<String> list = listFiles(calFileDirectory);
                 startRadioCalFileName = calFileDirectory + File.separator + (String) list.toArray()[0];
             }
-        } catch (IOException ex) {
+        } catch (IOException _) {
             LOG.log(Level.SEVERE, "Unable to list files in directory {0}", DEFAULT_CAL_FILE_PATH);
             return false;
         }
@@ -1198,8 +1197,7 @@ public class SignalTrack extends JFrame {
 
             @Override
             public void actionPerformed(ActionEvent e) {
-                // String pkwdwpl = gpsProcessor.getPKWDWPLTestString(abstractMap.getMouseCoordinates());
-                // getAprsProcessor().getAPRSTNCClient().processNMEAData(pkwdwpl);
+                getAprsProcessor().getAPRSTNCClient().sendUpdate();
             }
         };
 
@@ -1210,9 +1208,7 @@ public class SignalTrack extends JFrame {
             if (startTNCArg > AbstractTerminalNodeClient.getCatalogMap().size() - 1) {
                 startTNCArg = 0;
             }
-            tncClassName = (String) AbstractTerminalNodeClient.getCatalogMap().keySet().toArray()[startTNCArg];
         }
-
         aprsProcessor = new AprsProcessor(environmentSensor, isDebug());
     }
 
@@ -2563,7 +2559,7 @@ public class SignalTrack extends JFrame {
 				aprsScheduler.shutdown();
 				aprsScheduler.awaitTermination(5, TimeUnit.SECONDS);
 				LOG.log(Level.INFO, "SignalTrack.tt4Scheduler has gracefully terminated");
-			} catch (InterruptedException e) {
+			} catch (InterruptedException _) {
 				aprsScheduler.shutdownNow();
 				LOG.log(Level.SEVERE, "SignalTrack.tt4Scheduler has timed out after 5 seconds of waiting to terminate processes.");
 				Thread.currentThread().interrupt();
@@ -2576,7 +2572,7 @@ public class SignalTrack extends JFrame {
 				staticScheduler.shutdown();
 				staticScheduler.awaitTermination(5, TimeUnit.SECONDS);
 				LOG.log(Level.INFO, "SignalTrack.staticScheduler has gracefully terminated");
-			} catch (InterruptedException e) {
+			} catch (InterruptedException _) {
 				staticScheduler.shutdownNow();
 				LOG.log(Level.SEVERE, "SignalTrack.staticScheduler has timed out after 5 seconds of waiting to terminate processes.");
 				Thread.currentThread().interrupt();
@@ -2730,7 +2726,6 @@ public class SignalTrack extends JFrame {
         startRadioCalFileName = userPref.get("StartRadioCalFileName", "null");
         testName = userPref.get("TestName", DEFAULT_TEST_NAME).replace(".sql", "");
         gpsClassName = userPref.get("GPSClassName", (String) AbstractGpsProcessor.getCatalogMap().keySet().toArray()[0]);
-		tncClassName = userPref.get("TNCClassName", (String) AbstractTerminalNodeClient.getCatalogMap().keySet().toArray()[0]);
         signalTrackMapName = SignalTrackMapNames.valueOf(userPref.get("SignalTrackMapName", SignalTrackMapNames.OpenStreetMap.name()));
         environmentSensorClassName = userPref.get("EnvironmentMonitorClassName", (String) AbstractEnvironmentSensor.getCatalogMap().keySet().toArray()[0]);
     }

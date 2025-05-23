@@ -278,7 +278,7 @@ public class AprsProcessor implements AutoCloseable {
 				executor.shutdown();
 				executor.awaitTermination(5, TimeUnit.SECONDS);
 				LOG.log(Level.INFO, "AbstractAPRSProcessor.executor has gracefully terminated");
-			} catch (InterruptedException e) {
+			} catch (InterruptedException _) {
 				executor.shutdownNow();
 				LOG.log(Level.SEVERE, "AbstractAPRSProcessor.executor has timed out after 5 seconds of waiting to terminate processes.");
 				Thread.currentThread().interrupt();

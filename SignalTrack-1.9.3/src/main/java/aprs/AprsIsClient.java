@@ -3,7 +3,7 @@ package aprs;
 import java.net.UnknownHostException;
 
 import java.nio.charset.StandardCharsets;
-
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -180,7 +180,7 @@ public class AprsIsClient extends AbstractAPRSProcessor {
 				userPrefs.putInt("portNumber" + i, netParams.get(i).getPortNumber());
 				userPrefs.put("description", netParams.get(i).getDescription());
 			}
-		} catch (IndexOutOfBoundsException ex) {
+		} catch (IndexOutOfBoundsException _) {
 			LOG.log(Level.WARNING, "Number of saved APRS/IS addresses: {0} is less than list size because {1} servers were not available.", 
 					new Object[] {i, MAX_HOSTS - i});
 		}
@@ -299,6 +299,88 @@ public class AprsIsClient extends AbstractAPRSProcessor {
 	    
 	    return bld.toString();
     }
+    
+    public String getAprsIsHTMLWeatherReportString(AbstractEnvironmentSensor aes, String callSign) {
+    	final String time = toAprsHourMinuteSecondUTC(aes.getZonedDateTimeUTC());
+    	    	
+    	final int windDirectionTrue = aes.getWindDirectionTrue();
+    	final double currentWindSpeed = aes.getCurrentWindSpeed(SpeedUnit.MPH);
+    	final double gustingWindSpeed = aes.getPeakPeriodicWindSpeedMeasurement(5, SpeedUnit.MPH);
+    	final double tempExteriorFahrenheit = aes.getTempExteriorFahrenheit();
+    	final double rainfallInchesLastHour = Meteorology.convertMillimetersToInches(aes.getRainfallMillimetersLastHour());
+    	final double rainfallInchesLast24Hours = Meteorology.convertMillimetersToInches(aes.getRainfallMillimetersLast24Hours());
+    	final double rainThisDayTotalInches = Math.round(aes.getDailyRainInches());
+    	final int exteriorHumidity = aes.getExteriorHumidity();
+    	final double barometricPressureRelativeHPA = aes.getBarometricPressureRelativeHPA();
+    	final double luminosityWM2 = aes.getLuminosityWM2();
+    	final String equipmentCode = aes.getEquipmentCode();
+        
+    	final StringBuilder html = new StringBuilder("<HTML>");
+        html.append("APRS IS WEATHER REPORT TRANSMITTED TO MODEM at ");
+        html.append(time);
+        html.append("<br>");
+		
+        html.append("&emsp;Call Sign: ");
+		html.append(callSign);
+		html.append("<br>");
+        
+		html.append("&emsp;Latitude: ");
+		html.append(degreesLatitudeToGPSFormat(aes.getStationLatitudeDegrees()));
+		html.append("<br>");
+		
+		html.append("&emsp;Longitude: ");
+		html.append(degreesLongitudeToGPSFormat(aes.getStationLongitudeDegrees()));
+		html.append("<br>");
+
+		html.append("&emsp;Wind Direction: ");
+		html.append(windDirectionTrue);
+		html.append("<br>");
+		
+		html.append("&emsp;Wind Speed MPH: ");
+		html.append(currentWindSpeed);
+		html.append("<br>");
+		
+		html.append("&emsp;Wind Speed 5 Min Peak MPH: ");
+		html.append(gustingWindSpeed);
+		html.append("<br>");
+		
+		html.append("&emsp;Exterior Temp Fahrenheit: ");
+		html.append(tempExteriorFahrenheit);
+		html.append("<br>");
+		
+		html.append("&emsp;Rain Last Hour Inches: ");
+		html.append(rainfallInchesLastHour);
+		html.append("<br>");
+		
+		html.append("&emsp;Rain Last 24 Hours Inches: ");
+		html.append(rainfallInchesLast24Hours);
+		html.append("<br>");
+		
+		html.append("&emsp;Rain This Calendar Day Total Inches: ");
+		html.append(rainThisDayTotalInches);
+		html.append("<br>");
+		
+		html.append("&emsp;Percent Humidity: ");
+		html.append(exteriorHumidity);
+		html.append("<br>");
+		
+		html.append("&emsp;Barometric Pressure mBars: ");
+		html.append(barometricPressureRelativeHPA);
+		html.append("<br>");
+		
+		html.append("&emsp;Luminosoty WM2: ");
+		html.append(luminosityWM2);
+		html.append("<br>");
+		
+		html.append("&emsp;Equipment Code: ");
+		html.append(equipmentCode);
+		
+		html.append("</HTML>");
+		
+		html.trimToSize();
+		
+		return html.toString();
+    }
 	
 	@Override
 	public String getAbbreviatedTag() {
@@ -309,12 +391,12 @@ public class AprsIsClient extends AbstractAPRSProcessor {
 	public String getTag() {
 		return DEFAULT_TAG;
 	}
-
+	
 	@Override
 	public boolean sendUpdate() {
 		updateString = getAprsIsWeatherReportString(aes, getCallSign());
-		htmlString = "";
-		writeToIsServer(updateString);
+		htmlString = getAprsIsHTMLWeatherReportString(aes, getCallSign());
+ 		writeToIsServer(updateString);
 		return true;
 	}
 
@@ -337,5 +419,13 @@ public class AprsIsClient extends AbstractAPRSProcessor {
 	public String getClassName() {
 		return this.getClass().getName();
 	}
+    
+    public static String toAprsDayHourMinute(ZonedDateTime zdt) {
+        return String.format(Locale.US, "%02d%02d%02d%s", zdt.getDayOfMonth(), zdt.getHour(), zdt.getMinute(), "/");
+    }
+    
+    public static String toAprsHourMinuteSecondUTC(ZonedDateTime zdt) {
+        return String.format(Locale.US, "%02d%02d%02d%s", zdt.getHour(), zdt.getMinute(), zdt.getSecond(), "z");
+    }
 
 }

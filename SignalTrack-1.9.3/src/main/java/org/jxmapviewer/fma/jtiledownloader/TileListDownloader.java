@@ -308,7 +308,7 @@ public class TileListDownloader {
 			InputStream inputStream = null;
 			try (BufferedOutputStream bufferedOutputStream = new BufferedOutputStream(new FileOutputStream(file))) {
 				urlConnection = (HttpURLConnection) url.openConnection();
-				urlConnection.setRequestProperty("User-Agent", "JTileDownloader/" + Constants.VERSION);
+				urlConnection.setRequestProperty("User-Agent", "SignalTrack/" + Constants.VERSION);
 				urlConnection.setUseCaches(false);
 
 				// if last modified since would work like this and you would get a 304 response
