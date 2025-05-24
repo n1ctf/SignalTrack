@@ -1279,7 +1279,7 @@ public abstract class AbstractGpsProcessor implements AutoCloseable {
 				// and return false.
 				return (s == Integer.valueOf(chkSum, 16));
 
-			} catch (final NumberFormatException ex) {
+			} catch (NumberFormatException _) {
 				return false;
 			}
 		}
@@ -1379,7 +1379,7 @@ public abstract class AbstractGpsProcessor implements AutoCloseable {
 				executor.shutdown();
 				executor.awaitTermination(5, TimeUnit.SECONDS);
 				LOG.log(Level.INFO, "AbstractGpsProcessor.executor service has gracefully terminated");
-			} catch (InterruptedException e) {
+			} catch (InterruptedException _) {
 				executor.shutdownNow();
 				LOG.log(Level.SEVERE, "AbstractGpsProcessor.executor service has timed out after 5 seconds of waiting to terminate processes.");
 				Thread.currentThread().interrupt();

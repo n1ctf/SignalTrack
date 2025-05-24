@@ -38,8 +38,14 @@ public class KenwoodTMD710A extends AbstractTerminalNodeClient {
 	private static final boolean SERIAL_PARAMETERS_FIXED = false;
 	private static final boolean SERIAL_BAUD_RATE_FIXED = false;
 
-	private static final BaudRate[] SUPPORTED_BAUD_RATES = { BaudRate.BAUDRATE_300, BaudRate.BAUDRATE_1200,
-			BaudRate.BAUDRATE_4800, BaudRate.BAUDRATE_9600, BaudRate.BAUDRATE_19200, BaudRate.BAUDRATE_38400 };
+	private static final BaudRate[] SUPPORTED_BAUD_RATES = { 
+		BaudRate.BAUDRATE_300, 
+		BaudRate.BAUDRATE_1200,
+		BaudRate.BAUDRATE_4800, 
+		BaudRate.BAUDRATE_9600, 
+		BaudRate.BAUDRATE_19200, 
+		BaudRate.BAUDRATE_38400 
+	};
 
 	private static final Logger LOG = Logger.getLogger(KenwoodTMD710A.class.getName());
 	private static final int READ_BUFFER_LEN = 2048;

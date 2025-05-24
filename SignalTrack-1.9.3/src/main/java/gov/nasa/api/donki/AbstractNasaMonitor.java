@@ -19,13 +19,16 @@ import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import org.json.JSONArray;
+import org.json.JSONObject;
+
 import time.ConsolidatedTime;
 
 public abstract class AbstractNasaMonitor implements AutoCloseable {
 
-    public static final String JOHNS_API_KEY = "NZtm8vzNM9fbXcwyiHamGLuM8f1yw3guyXXscOqW";
+    public static final String DEFAULT_API_KEY = "NZtm8vzNM9fbXcwyiHamGLuM8f1yw3guyXXscOqW";
     public static final int TERMINATE_TIMEOUT = 10;  // seconds
-    public static final String DEFAULT_API_KEY = "DEMO_KEY";
+    public static final String DEMO_API_KEY = "DEMO_KEY";
     public static final boolean DEFAULT_DEBUG_MODE = true;
     
     public enum Events {
@@ -124,10 +127,8 @@ public abstract class AbstractNasaMonitor implements AutoCloseable {
 					executor.execute(update(getURLGroup(apiHeader, getCurrentUTCMinusPersistenceMinutes(), getCurrentUTC())));
 				}
 			}
-			
 			if (isEnabled()) {
 				checkPeriodSecondsRemaining--;
-				
 				if (getActivityTime() != null && getAgeOfEventInMinutes() < getPersistenceMinutes()) {
 					if (secondCounter == 0) {
 						minutesElapsed++;
@@ -137,7 +138,6 @@ public abstract class AbstractNasaMonitor implements AutoCloseable {
 				} else {
 					minutesElapsed = -1;
 				}
-				
 				pcs.firePropertyChange(Events.MINUTES_ELAPSED.name(), checkPeriodSecondsRemaining, minutesElapsed);
 			}
 		}
@@ -156,7 +156,8 @@ public abstract class AbstractNasaMonitor implements AutoCloseable {
 				oneSecondTimerScheduler.shutdown();
 				oneSecondTimerScheduler.awaitTermination(2, TimeUnit.SECONDS);
 				getLogger().log(Level.INFO, "AbstractNasaMonitor.oneSecondTimerScheduler service has gracefully terminated");
-			} catch (InterruptedException e) {
+			} catch (InterruptedException _) {
+				oneSecondTimerScheduler.shutdownNow();
 				getLogger().log(Level.SEVERE, "AbstractNasaMonitor.oneSecondTimerScheduler service has timed out after 2 seconds of waiting to terminate processes.");
 				Thread.currentThread().interrupt();
 			}
@@ -193,7 +194,7 @@ public abstract class AbstractNasaMonitor implements AutoCloseable {
     	if (getActivityTime() == null) {
     		return -1;
     	} else {
-    		return ChronoUnit.MINUTES.between(getActivityTime(), getCurrentUTC());
+    		return Math.abs(ChronoUnit.MINUTES.between(getActivityTime(), getCurrentUTC()));
     	}
     }
 
@@ -230,7 +231,7 @@ public abstract class AbstractNasaMonitor implements AutoCloseable {
 				executor.shutdown();
 				executor.awaitTermination(2, TimeUnit.SECONDS);
 				getLogger().log(Level.INFO, "AbstractNasaMonitor.executor service has gracefully terminated");
-			} catch (InterruptedException e) {
+			} catch (InterruptedException _) {
 				executor.shutdownNow();
 				getLogger().log(Level.SEVERE, "AbstractNasaMonitor.executor service has timed out after 2 seconds of waiting to terminate processes.");
 				Thread.currentThread().interrupt();
@@ -259,5 +260,16 @@ public abstract class AbstractNasaMonitor implements AutoCloseable {
         }
         return str;
     }
+    
+    public String getLongestOccurenceOf(String element, JSONArray jsonArray) {
+		String str = "";
+		for (int i = 0; i < jsonArray.length(); i++) {
+			final JSONObject obj = (JSONObject) jsonArray.get(i);
+			if (obj.getString(element).length() > str.length()) {
+				str = obj.getString(element);
+			}
+		}
+		return str;
+	}
 
 }

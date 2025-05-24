@@ -53,17 +53,17 @@ public class RSGPanel {
 		lblG.setBackground(Color.GREEN);
 	}
 	
-	public void setRadioBlackout(RadioBlackout r) {
+	public void setRadioBlackout(RadioBlackoutScale r) {
 		lblR.setText(r.name());
 		lblR.setBackground(getColor(r.ordinal()));
 	}
 	
-	public void setSolarRadiationStorm(SolarRadiationStorm s) {
+	public void setSolarRadiationStorm(SolarRadiationStormScale s) {
 		lblS.setText(s.name());
 		lblS.setBackground(getColor(s.ordinal()));
 	}
 	
-	public void setGeomagneticStorm(GeomagneticStorm g) {
+	public void setGeomagneticStorm(GeomagneticStormScale g) {
 		lblG.setText(g.name());
 		lblG.setBackground(getColor(g.ordinal()));
 	}

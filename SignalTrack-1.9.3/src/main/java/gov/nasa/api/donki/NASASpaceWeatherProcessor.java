@@ -11,6 +11,7 @@ import java.time.format.DateTimeFormatter;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -31,7 +32,7 @@ public class NASASpaceWeatherProcessor implements AutoCloseable {
 	
 	private static final String CRLF = "\r\n";
 	private static final Preferences userPrefs = Preferences.userRoot().node(NASASpaceWeatherProcessor.class.getName());
-	private static final int TERMINATE_TIMEOUT = 10;  // seconds
+	private static final int TERMINATE_TIMEOUT = 3;  // seconds
     private static final Logger LOG = Logger.getLogger(NASASpaceWeatherProcessor.class.getName());
     
     private final PropertyChangeSupport pcs = new PropertyChangeSupport(this);
@@ -64,14 +65,14 @@ public class NASASpaceWeatherProcessor implements AutoCloseable {
 	}
 	
 	private void initializeComponents() {
-		nasaMonitor.add(new NasaSolarFlareMonitor(AbstractNasaMonitor.JOHNS_API_KEY, true));
-		nasaMonitor.add(new NasaCMEMonitor(AbstractNasaMonitor.JOHNS_API_KEY, true));
-		nasaMonitor.add(new NasaGeomagneticStormMonitor(AbstractNasaMonitor.JOHNS_API_KEY, true));
-		nasaMonitor.add(new NasaSolarEnergeticParticleMonitor(AbstractNasaMonitor.JOHNS_API_KEY, true));
-		nasaMonitor.add(new NasaInterplanetaryShockMonitor(AbstractNasaMonitor.JOHNS_API_KEY, true));
-		nasaMonitor.add(new NasaRadiationBeltEnhancementMonitor(AbstractNasaMonitor.JOHNS_API_KEY, true));
-		nasaMonitor.add(new NasaHighSpeedStreamMonitor(AbstractNasaMonitor.JOHNS_API_KEY, true));
-		nasaMonitor.add(new NasaMagnetopauseCrossingMonitor(AbstractNasaMonitor.JOHNS_API_KEY, true));
+		nasaMonitor.add(new NasaSolarFlareMonitor(AbstractNasaMonitor.DEFAULT_API_KEY, true));
+		nasaMonitor.add(new NasaCMEMonitor(AbstractNasaMonitor.DEFAULT_API_KEY, true));
+		nasaMonitor.add(new NasaGeomagneticStormMonitor(AbstractNasaMonitor.DEFAULT_API_KEY, true));
+		nasaMonitor.add(new NasaSolarEnergeticParticleMonitor(AbstractNasaMonitor.DEFAULT_API_KEY, true));
+		nasaMonitor.add(new NasaInterplanetaryShockMonitor(AbstractNasaMonitor.DEFAULT_API_KEY, true));
+		nasaMonitor.add(new NasaRadiationBeltEnhancementMonitor(AbstractNasaMonitor.DEFAULT_API_KEY, true));
+		nasaMonitor.add(new NasaHighSpeedStreamMonitor(AbstractNasaMonitor.DEFAULT_API_KEY, true));
+		nasaMonitor.add(new NasaMagnetopauseCrossingMonitor(AbstractNasaMonitor.DEFAULT_API_KEY, true));
 	}
 	
 	private void configureComponents() {
@@ -137,10 +138,11 @@ public class NASASpaceWeatherProcessor implements AutoCloseable {
 					try {
 						LOG.log(Level.INFO, "Initializing NASASpaceWeatherProcessor.startScheduler service termination....");
 						startScheduler.shutdown();
-						startScheduler.awaitTermination(20, TimeUnit.SECONDS);
+						startScheduler.awaitTermination(2, TimeUnit.SECONDS);
 						LOG.log(Level.INFO, "NASASpaceWeatherProcessor.startScheduler service has gracefully terminated");
-					} catch (InterruptedException e) {
-						LOG.log(Level.SEVERE, "NASASpaceWeatherProcessor.startScheduler service has timed out after 20 seconds of waiting to terminate processes.");
+					} catch (InterruptedException _) {
+						startScheduler.shutdownNow();
+						LOG.log(Level.SEVERE, "NASASpaceWeatherProcessor.startScheduler service has timed out after 2 seconds of waiting to terminate processes.");
 						Thread.currentThread().interrupt();
 					}
 				}
@@ -169,7 +171,7 @@ public class NASASpaceWeatherProcessor implements AutoCloseable {
 				pcs.firePropertyChange(EVENT_NARRATIVE, null, "Flare ID: " + (String) event.getNewValue() + CRLF);
 			}
 			if (event.getPropertyName().equals(NasaSolarFlareMonitor.Event.RADIO_BLACKOUT.name())) {
-				rsgPanel.setRadioBlackout((RadioBlackout) event.getNewValue());
+				rsgPanel.setRadioBlackout((RadioBlackoutScale) event.getNewValue());
 			}
 			if (event.getPropertyName().equals(NasaSolarFlareMonitor.Event.BEGIN_TIME.name())) {
 				pcs.firePropertyChange(EVENT_NARRATIVE, null, 
@@ -272,7 +274,7 @@ public class NASASpaceWeatherProcessor implements AutoCloseable {
 						nasaMonitor.get(2).getFlagText());
 			}
 			if (event.getPropertyName().equals(NasaGeomagneticStormMonitor.Event.GEOMAGNETIC_STORM.name())) {
-				rsgPanel.setGeomagneticStorm((GeomagneticStorm) event.getNewValue());
+				rsgPanel.setGeomagneticStorm((GeomagneticStormScale) event.getNewValue());
 			}
 			if (event.getPropertyName().equals(NasaGeomagneticStormMonitor.Event.NO_EVENTS.name())) {
 				pcs.firePropertyChange(EVENT_NARRATIVE, null, (String) event.getNewValue() + CRLF);
@@ -315,7 +317,7 @@ public class NASASpaceWeatherProcessor implements AutoCloseable {
 						+ "https://api.nasa.gov/DONKI/SEP" + CRLF);
 			}
 			if (event.getPropertyName().equals(NasaSolarEnergeticParticleMonitor.Event.SOLAR_RADIATION_STORM.name())) {
-				rsgPanel.setSolarRadiationStorm((SolarRadiationStorm) event.getNewValue());
+				rsgPanel.setSolarRadiationStorm((SolarRadiationStormScale) event.getNewValue());
 			}
 			if (event.getPropertyName().equals(NasaSolarEnergeticParticleMonitor.Event.DATA_FETCH_COMPLETE.name())) {
 				nasaSpaceWeatherGUI.getFlag(3).setForeground(nasaMonitor.get(3).getFlagTextColor());
@@ -471,14 +473,15 @@ public class NASASpaceWeatherProcessor implements AutoCloseable {
 
 	@Override
 	public void close() {
-		nasaMonitor.stream().filter(aNasaMonitor -> aNasaMonitor != null).forEach(AbstractNasaMonitor::close);
+		nasaMonitor.stream().filter(Objects::nonNull).forEach(AbstractNasaMonitor::close);
 		if (startScheduler != null) {
 			try {
 				LOG.log(Level.SEVERE, "Initializing AbstractNASAMonitor.secondScheduler service termination....");
-				startScheduler.shutdownNow();
+				startScheduler.shutdown();
 				startScheduler.awaitTermination(TERMINATE_TIMEOUT, TimeUnit.SECONDS);
 				LOG.log(Level.SEVERE, "NASASpaceWeatherProcessor.startScheduler service has gracefully terminated");
-			} catch (InterruptedException e) {
+			} catch (InterruptedException _) {
+				startScheduler.shutdownNow();
 				LOG.log(Level.SEVERE, "NASASpaceWeatherProcessor.startScheduler service has timed out after {0} seconds of waiting to terminate processes.", TERMINATE_TIMEOUT);
 				Thread.currentThread().interrupt();
 			}

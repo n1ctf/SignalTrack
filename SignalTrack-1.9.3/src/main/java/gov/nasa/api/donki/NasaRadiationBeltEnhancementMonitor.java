@@ -108,52 +108,55 @@ public class NasaRadiationBeltEnhancementMonitor extends AbstractNasaMonitor {
 		public void run() {
 			String jsonString = null;
             try (JsonReader jsonReader = new JsonReader(isDebug())) {
-                jsonString = jsonReader.readJsonFromUrl(urlGroup);
-				if (jsonString != null && jsonString.length() > 2 && (eventTime == null || getAgeOfEventInMinutes() < getPersistenceMinutes())) {
+            	jsonString = jsonReader.readJsonFromUrl(urlGroup);
+            	if (jsonString != null && jsonString.length() > 2 && (activityTime == null || getAgeOfEventInMinutes() < getPersistenceMinutes())) {
 					noEvents = false;
+					
 					final JSONArray jsonArray = new JSONArray(jsonString);
 					final JSONObject lastElement = (JSONObject) jsonArray.get(jsonArray.length() - 1);
+				
 					if (isDebug()) {
-						LOG.log(Level.INFO,
-								"******** NasaRadiationBeltEnhancementMonitor.Update.JSONObject.lastElement -> {0}",
-								lastElement);
+						LOG.log(Level.INFO, "******** NasaRadiationBeltEnhancementMonitor.Update.JSONObject.lastElement -> {0}", lastElement);
 					}
+					
 					try {
 						pcs.firePropertyChange(Event.RBE_ID.name(), rbeID, lastElement.getString("rbeID"));
 						rbeID = lastElement.getString("rbeID");
-						activityTime = getCurrentUTC();
-					} catch (JSONException ex) {
+					} catch (JSONException _) {
 						if (isDebug()) {
 							LOG.log(Level.INFO, "**** NO rbeID is provided ****");
 						}
 					}
+					
 					try {
-						pcs.firePropertyChange(Event.EVENT_TIME.name(), eventTime,
-								fromNasaDateTimeGroup(lastElement.getString("eventTime")));
+						pcs.firePropertyChange(Event.EVENT_TIME.name(), eventTime, fromNasaDateTimeGroup(lastElement.getString("eventTime")));
 						eventTime = fromNasaDateTimeGroup(lastElement.getString("eventTime"));
-					} catch (JSONException ex) {
+						activityTime = eventTime;
+					} catch (JSONException _) {
 						if (isDebug()) {
 							LOG.log(Level.INFO, "**** NO RBE eventTime is provided ****");
 						}
 					}
+					
 					try {
-						pcs.firePropertyChange(Event.DISPLAY_NAME.name(), displayName,
-								lastElement.getString("displayName"));
+						pcs.firePropertyChange(Event.DISPLAY_NAME.name(), displayName, lastElement.getString("displayName"));
 						displayName = lastElement.getString("displayName");
-					} catch (JSONException ex) {
+					} catch (JSONException _) {
 						if (isDebug()) {
 							LOG.log(Level.INFO, "**** NO RBE displayName is provided ****");
 						}
 					}
+					
 					try {
 						final URL url = new URI(lastElement.getString("link")).toURL();
 						pcs.firePropertyChange(Event.LINK.name(), link, url);
 						link = url;
-					} catch (JSONException | URISyntaxException ex) {
+					} catch (JSONException | URISyntaxException _) {
 						if (isDebug()) {
 							LOG.log(Level.INFO, "**** NO link is provided ****");
 						}
 					}
+					
 					if (isDebug()) {
 						LOG.log(Level.INFO, "------RADIATION BELT ENHANCEMENT EVENTS-----");
 						LOG.log(Level.INFO, " CurrentUTC: {0}", getCurrentUTC());
@@ -193,7 +196,7 @@ public class NasaRadiationBeltEnhancementMonitor extends AbstractNasaMonitor {
 						LOG.log(Level.INFO, "NO RADIATION BELT ENHANCEMENT EVENTS IN THE LAST {0} Minutes", persistenceMinutes);
 					}
 				}
-			} catch (IOException | JSONException ex) {
+			} catch (IOException | JSONException _) {
 				LOG.log(Level.WARNING, "Error Retrieving: {0}", urlGroup);
 				LOG.log(Level.WARNING, "Returned json String: {0}", jsonString);
 				pcs.firePropertyChange(Event.NETWORK_ERROR.name(), null, "Error Retrieving: " + urlGroup);

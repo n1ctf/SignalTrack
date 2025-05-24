@@ -154,121 +154,135 @@ public class NasaCMEMonitor extends AbstractNasaMonitor {
         	String jsonString = null;
             try (JsonReader jsonReader = new JsonReader(isDebug())) {
                 jsonString = jsonReader.readJsonFromUrl(urlGroup);
-                if (jsonString != null && jsonString.length() > 2 && (time21_5 == null || getAgeOfEventInMinutes() < getPersistenceMinutes())) {
+                if (jsonString != null && jsonString.length() > 2 && (activityTime == null || getAgeOfEventInMinutes() < getPersistenceMinutes())) {
                     noEvents = false;
+                    
                     final JSONArray jsonArray = new JSONArray(jsonString);
                     final JSONObject lastElement = (JSONObject) jsonArray.get(jsonArray.length() - 1);
+                    
                     if (isDebug()) {
                         LOG.log(Level.INFO, "******** NasaCMEMonitor.Update.JSONObject.lastElement -> {0}", lastElement);
                     }
+                    
                     try {
                     	final String str = lastElement.getString("associatedCMEID");
                         pcs.firePropertyChange(Event.ACTIVITY_ID.name(), activityID, str);
                         activityID = str;
-                        activityTime = getCurrentUTC();
-                    } catch (JSONException ex) {
+                    } catch (JSONException _) {
                         if (isDebug()) {
                             LOG.log(Level.INFO, "**** NO activityID is provided ****");
                         }
                     }
+                    
                     try {
                     	final ZonedDateTime zdt = fromNasaDateTimeGroup(lastElement.getString("time21_5"));
                         pcs.firePropertyChange(Event.TIME21_5.name(), time21_5, zdt);
                         time21_5 = zdt;
-                    } catch (JSONException ex) {
+                    } catch (JSONException _) {
                         if (isDebug()) {
                             LOG.log(Level.INFO, "**** NO CME time21_5 is provided ****");
                         }
                     }
+                    
                     try {
                     	final ZonedDateTime zdt = fromNasaDateTimeGroup(lastElement.getString("startTime"));
                         pcs.firePropertyChange(Event.START_TIME.name(), startTime, zdt);
                         startTime = zdt;
-                    } catch (JSONException ex) {
+                        activityTime = zdt;
+                    } catch (JSONException _) {
                         if (isDebug()) {
                             LOG.log(Level.INFO, "**** NO CME startTime is provided ****");
                         }
                     }
+                    
                     try {
                     	final boolean b = lastElement.getBoolean("isEarthGB");
                         pcs.firePropertyChange(Event.IS_EARTH_GB.name(), isEarthGB, b);
                         isEarthGB = b;
-                    } catch (JSONException ex) {
+                    } catch (JSONException _) {
                         if (isDebug()) {
                             LOG.log(Level.INFO, "**** NO CME isEarthGB is provided ****");
                         }
                     }
+                    
                     try {
                     	final double a = lastElement.getDouble("halfAngle");
                         pcs.firePropertyChange(Event.HALF_ANGLE.name(), halfAngle, a);
                         halfAngle = a;
-                    } catch (JSONException ex) {
+                    } catch (JSONException _) {
                         if (isDebug()) {
                             LOG.log(Level.INFO, "**** NO CME halfAngle is provided ****");
                         }
                     }
+                    
                     try {
                     	final double d = lastElement.getDouble("latitude");
                         pcs.firePropertyChange(Event.LATITUDE.name(), latitude, d);
                         latitude = d;
-                    } catch (JSONException ex) {
+                    } catch (JSONException _) {
                         if (isDebug()) {
                             LOG.log(Level.INFO, "**** NO CME latitude is provided ****");
                         }
                     }
+                    
                     try {
                     	final double d = lastElement.getDouble("longitude");
                         pcs.firePropertyChange(Event.LONGITUDE.name(), longitude, d);
                         longitude = d;
-                    } catch (JSONException ex) {
+                    } catch (JSONException _) {
                         if (isDebug()) {
                             LOG.log(Level.INFO, "**** NO CME longitude is provided ****");
                         }
                     }
+                    
                     try {
                     	final double d = lastElement.getDouble("estimatedDuration");
                         pcs.firePropertyChange(Event.ESTIMATED_DURATION.name(), estimatedDuration, d);
                         estimatedDuration = d;
-                    } catch (JSONException ex) {
+                    } catch (JSONException _) {
                         if (isDebug()) {
                             LOG.log(Level.INFO, "**** NO CME estimatedDuration is provided ****");
                         }
                     }
+                    
                     try {
                     	final ZonedDateTime zdt = fromNasaDateTimeGroup(lastElement.getString("estimatedShockArrivalTime"));
                         pcs.firePropertyChange(Event.ESTIMATED_SHOCK_ARRIVAL_TIME.name(), estimatedShockArrivalTime, zdt);
                         estimatedShockArrivalTime = zdt;
-                    } catch (JSONException ex) {
+                    } catch (JSONException _) {
                         if (isDebug()) {
                             LOG.log(Level.INFO, "**** NO CME estimatedShockArrivalTime is provided ****");
                         }
                     }
+                    
                     try {
                     	final String str = lastElement.getString("type");
                         pcs.firePropertyChange(Event.TYPE.name(), type, str);
                         type = str;
-                    } catch (JSONException ex) {
+                    } catch (JSONException _) {
                         if (isDebug()) {
                             LOG.log(Level.INFO, "**** NO CME type is provided ****");
                         }
                     }
+                    
                     try {
                     	final URL newLink = new URI(lastElement.getString("link")).toURL();
 						pcs.firePropertyChange(Event.LINK.name(), link, newLink);
 						link = newLink;
-					} catch (JSONException ex) {
+					} catch (JSONException _) {
 						if (isDebug()) {
 							LOG.log(Level.INFO, "**** NO link is provided ****");
 						}
-					} catch (MalformedURLException ex) {
+					} catch (MalformedURLException _) {
 						if (isDebug()) {
 							LOG.log(Level.INFO, "Malformed URL: {0}", link);
 						}
-					} catch (URISyntaxException ex) {
+					} catch (URISyntaxException _) {
 						if (isDebug()) {
 							LOG.log(Level.INFO, "Malformed URI: {0}", link);
 						}
 					}
+                    
                     if (isDebug()) {
 						LOG.log(Level.INFO, "{0} {1} {2} {3} {4} {5} {6} {7} {8} {9} {10} {11} {12} {13} {14} {15}" +
 								"{16} {17} {18} {19} {20} {21} {22} {23} {24} {25}",
@@ -342,7 +356,7 @@ public class NasaCMEMonitor extends AbstractNasaMonitor {
                         LOG.log(Level.INFO, "NO REPORTABLE CORONAL MASS EJECTIONS IN THE LAST {0} Minutes", persistenceMinutes);
                     }
                 }
-            } catch (JSONException ex) {
+            } catch (JSONException _) {
                 LOG.log(Level.WARNING, "Error Retrieving: {0}", urlGroup);
 				LOG.log(Level.WARNING, "Returned json String: {0}", jsonString);
                 pcs.firePropertyChange(Event.NETWORK_ERROR.name(), null, "Error Retrieving: " + urlGroup);
@@ -410,8 +424,7 @@ public class NasaCMEMonitor extends AbstractNasaMonitor {
         	return Color.YELLOW;
         } else if (type.contains("CLEAR")) {
             return Color.GREEN;
-        }
-        else {
+        } else {
             return Color.LIGHT_GRAY;
         }
     }
@@ -433,8 +446,7 @@ public class NasaCMEMonitor extends AbstractNasaMonitor {
         	return Color.BLACK;
         } else if (type.contains("CLEAR")) {
         	return Color.BLACK;
-        }
-        else {
+        } else {
         	return Color.BLACK;
         }
     }

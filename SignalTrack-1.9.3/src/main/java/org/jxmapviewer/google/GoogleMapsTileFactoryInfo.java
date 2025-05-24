@@ -34,8 +34,6 @@ public class GoogleMapsTileFactoryInfo extends TileFactoryInfo {
 
 	@Override
 	public String getTileUrl(int x, int y, int zoom) {
-		System.out.println("testing for validity: X " + x + " Y = " + y);
-
 		zoom = getTotalMapZoom() - zoom;
 
 		final double xtile = x + 0.5;

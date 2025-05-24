@@ -54,7 +54,7 @@ public class NasaSolarFlareMonitor extends AbstractNasaMonitor {
 	
 	protected String flareID;
 	private List<String> instruments = new ArrayList<>(8);
-	private RadioBlackout radioBlackout = RadioBlackout.R0;
+	private RadioBlackoutScale radioBlackoutScale = RadioBlackoutScale.R0;
 	private ZonedDateTime beginTime;
 	private ZonedDateTime peakTime;
 	private ZonedDateTime endTime;
@@ -162,114 +162,126 @@ public class NasaSolarFlareMonitor extends AbstractNasaMonitor {
 				// The following statement serves 2 purposes: To know if the class has ever encountered a Solar Flare event,
 				// and if it has, then to keep checking for the length of time that event should persist on the screen. 
 				// The state of the peakTime variable tests if the API call ever received a response that included peakTime. 
-				// If peakTime is null, then it hasn't received a response, or it was an incomplete response.
+				// If activityTime is null, then it hasn't received a response, or it was an incomplete response.
 				// In either case, the query will be sent every 2 minutes by default, or whatever the user selects. 
-				// If peakTime is not null, then there was a complete solar flare report from NASA. That report should stay
+				// If activityTime is not null, then there was a complete solar flare report from NASA. That report should stay
 				// on screen for the user selected number of minutes - which defaults to DEFAULT_PERSISTENCE_PERIOD_MINUTES.  
-				// The age in minutes reported by the overridden abstract getEventTime() method - which in this case 
-				// returns the peakTime instance variable - is calculated in the getAgeOfEventInMinutes() method. The age of 
-				// the solar flare event is assumed to start at peakTime. So long as the age is less than the persistence period
+				// The age in minutes reported by the overridden abstract getActivityTime() method - which in this case 
+				// returns the currentUTC() time the flrID was published - is calculated in the getAgeOfEventInMinutes() method. The age of 
+				// the solar flare event is assumed to start when the flrID statement is received. So long as the age is less than the persistence period
 				// this test will be true, and the query will be resent every DEFAULT_API_QUERY_PERIOD_SECONDS.
 				// In addition, this test is suppressed from running if, for any reason, the jsonString.length() is 2 or less.
 				
-                if (jsonString != null && jsonString.length() > 2 && (peakTime == null || getAgeOfEventInMinutes() < getPersistenceMinutes())) {
+                if (jsonString != null && jsonString.length() > 2 && (activityTime == null || getAgeOfEventInMinutes() < getPersistenceMinutes())) {
 					noEvents = false;
+					
 					final JSONArray jsonArray = new JSONArray(jsonString);
 					final JSONObject lastElement = (JSONObject) jsonArray.get(jsonArray.length() - 1);
+					
 					if (isDebug()) {
 						LOG.log(Level.INFO, "******** NasaSolarFlareMonitor.Update.JSONObject.lastElement -> {0}", lastElement);
 					}
+					
 					try {
-						String str = getLongestOccurenceOf("flrID", jsonArray);
+						// String str = getLongestOccurenceOf("flrID", jsonArray);
+						String str = lastElement.getString("flrID");
 						str = str.length() > 4 ? str : "Unidentified Flare";
 						pcs.firePropertyChange(Event.FLARE_ID.name(), flareID, str);
 						flareID = str;
-						activityTime = getCurrentUTC();
-					} catch (JSONException ex) {
+					} catch (JSONException _) {
 						if (isDebug()) {
 							LOG.log(Level.INFO, "**** NO flareID is provided ****");
 						}
 					}
+					
 					try {
 						final String ct = lastElement.getString("classType");
-						final RadioBlackout rb = getRadioBlackoutRisk(ct);
+						final RadioBlackoutScale rb = getRadioBlackoutRisk(ct);
 						pcs.firePropertyChange(Event.CLASS_TYPE.name(), classType, ct);
-						pcs.firePropertyChange(Event.RADIO_BLACKOUT.name(), radioBlackout, rb);
+						pcs.firePropertyChange(Event.RADIO_BLACKOUT.name(), radioBlackoutScale, rb);
 						classType = ct;
-						radioBlackout = rb;
-					} catch (JSONException ex) {
+						radioBlackoutScale = rb;
+					} catch (JSONException _) {
 						if (isDebug()) {
 							LOG.log(Level.INFO, "**** NO classType is provided ****");
 						}
 					}
+					
 					try {
 						final String str = lastElement.getString("sourceLocation");
 						pcs.firePropertyChange(Event.SOURCE_LOCATION.name(), sourceLocation, str);
 						sourceLocation = str;
-					} catch (JSONException ex) {
+					} catch (JSONException _) {
 						if (isDebug()) {
 							LOG.log(Level.INFO, "**** NO sourceLocation is provided ****");
 						}
 					}
+					
 					try {
 						final int i = lastElement.getInt("activeRegionNum");
 						pcs.firePropertyChange(Event.ACTIVE_REGION_NUMBER.name(), activeRegionNumber, i);
 						activeRegionNumber = i;
-					} catch (JSONException ex) {
+					} catch (JSONException _) {
 						if (isDebug()) {
 							LOG.log(Level.INFO, "**** NO activeRegionNumber is provided ****");
 						}
 					}
+					
 					try {
 						final ZonedDateTime zdt = fromNasaDateTimeGroup(lastElement.getString("beginTime"));
 						pcs.firePropertyChange(Event.BEGIN_TIME.name(), beginTime, zdt);
 						beginTime = zdt;
-					} catch (JSONException ex) {
+					} catch (JSONException _) {
 						if (isDebug()) {
 							LOG.log(Level.INFO, "**** NO beginTime is provided ****");
 						}
 					}
+					
 					try {
 						final ZonedDateTime zdt = fromNasaDateTimeGroup(lastElement.getString("peakTime"));
 						pcs.firePropertyChange(Event.PEAK_TIME.name(), peakTime, zdt);
 						peakTime = zdt;
-					} catch (JSONException ex) {
+					} catch (JSONException _) {
 						if (isDebug()) {
 							LOG.log(Level.INFO, "**** NO peakTime is provided ****");
 						}
 					}
+					
 					try {
 						final ZonedDateTime zdt = fromNasaDateTimeGroup(lastElement.getString("endTime"));
 						pcs.firePropertyChange(Event.END_TIME.name(), endTime, zdt);
 						endTime = zdt;
-					} catch (JSONException ex) {
+						activityTime = zdt;
+					} catch (JSONException _) {
 						if (isDebug()) {
 							LOG.log(Level.INFO, "**** NO endTime is provided ****");
 						}
 					}
+					
 					try {
 						final URL newLink = new URI(lastElement.getString("link")).toURL();
 						pcs.firePropertyChange(Event.LINK.name(), link, newLink);
 						link = newLink;
-					} catch (JSONException ex) {
+					} catch (JSONException _) {
 						if (isDebug()) {
 							LOG.log(Level.INFO, "**** NO link is provided ****");
 						}
-					} catch (MalformedURLException ex) {
+					} catch (MalformedURLException _) {
 						if (isDebug()) {
 							LOG.log(Level.INFO, "Malformed URL: {0}", link);
 						}
-					} catch (URISyntaxException ex) {
+					} catch (URISyntaxException _) {
 						if (isDebug()) {
 							LOG.log(Level.INFO, "Malformed URI: {0}", link);
 						}
 					}
+					
 					try {
 						if (lastElement.get("instruments") != null) {
 	 						pcs.firePropertyChange(Event.INSTRUMENTS.name(), instruments, JsonReader.jsonArrayToStringList((JSONArray) lastElement.get("instruments")));
 							instruments = JsonReader.jsonArrayToStringList((JSONArray) lastElement.get("instruments"));
 						}
-					} catch (JSONException ex) {
+					} catch (JSONException _) {
 						if (isDebug()) {
 							LOG.log(Level.INFO, "**** NO instruments are provided ****");
 						}
@@ -280,7 +292,7 @@ public class NasaSolarFlareMonitor extends AbstractNasaMonitor {
 							pcs.firePropertyChange(Event.LINKED_EVENTS.name(), linkedEvents, le);
 							linkedEvents = le;
 						}
-					} catch (JSONException | ClassCastException ex) {
+					} catch (JSONException | ClassCastException _) {
 						if (isDebug()) {
 							LOG.log(Level.INFO, "**** NO linkedEvents are provided ****");
 						}
@@ -338,7 +350,7 @@ public class NasaSolarFlareMonitor extends AbstractNasaMonitor {
 						LOG.log(Level.INFO, "NO REPORTABLE SOLAR FLARE EVENTS IN THE LAST {0} Minutes", persistenceMinutes);
 					}
 				}
-			} catch (JSONException ex) {
+			} catch (JSONException _) {
 				LOG.log(Level.WARNING, "Error Retrieving Data from URL Group: {0}\n  Returned json String: {1}", 
 						new Object[] { urlGroup, jsonString });
 				pcs.firePropertyChange(Event.NETWORK_ERROR.name(), null, "Error Retrieving: " + urlGroup);
@@ -347,41 +359,30 @@ public class NasaSolarFlareMonitor extends AbstractNasaMonitor {
 			}
 		}
 		
-		private String getLongestOccurenceOf(String element, JSONArray jsonArray) {
-			String str = "";
-			for (int i = 0; i < jsonArray.length(); i++) {
-				final JSONObject obj = (JSONObject) jsonArray.get(i);
-				if (obj.getString(element).length() > str.length()) {
-					str = obj.getString(element);
-				}
-			}
-			return str;
-		}
-		
-		private RadioBlackout getRadioBlackoutRisk(String type) {
+		private RadioBlackoutScale getRadioBlackoutRisk(String type) {
 			try {
 				final double level = Double.parseDouble(type.substring(1));
 				if (type.contains("M") && level <= 2) {
-					return RadioBlackout.R1;
+					return RadioBlackoutScale.R1;
 				}
 				if (type.contains("M") && level <= 5) {
-					return RadioBlackout.R2;
+					return RadioBlackoutScale.R2;
 				}
 				if (type.contains("X") && level <= 9) {
-					return RadioBlackout.R3;
+					return RadioBlackoutScale.R3;
 				}
 				if (type.contains("X") && level <= 15) {
-					return RadioBlackout.R4;
+					return RadioBlackoutScale.R4;
 				}
 				if (type.contains("X")) {
-					return RadioBlackout.R5;
+					return RadioBlackoutScale.R5;
 				}
-			} catch (IndexOutOfBoundsException ex) {
+			} catch (IndexOutOfBoundsException _) {
 				LOG.log(Level.WARNING, "Index Out Of Bounds Exception: {0}", type);
-			} catch (NumberFormatException ex) {
+			} catch (NumberFormatException _) {
 				LOG.log(Level.WARNING, "Number Format Exception: {0}", type);
 			}
-			return RadioBlackout.R0;
+			return RadioBlackoutScale.R0;
 	    }
 		
 		private String getRadioBlackoutRiskText(String type) {
@@ -402,9 +403,9 @@ public class NasaSolarFlareMonitor extends AbstractNasaMonitor {
 				if (type.contains("X")) {
 					return "R5 - EXTREME";
 				}
-			} catch (IndexOutOfBoundsException ex) {
+			} catch (IndexOutOfBoundsException _) {
 				LOG.log(Level.WARNING, "Index Out Of Bounds Exception: {0}", type);
-			} catch (NumberFormatException ex) {
+			} catch (NumberFormatException _) {
 				LOG.log(Level.WARNING, "Number Format Exception: {0}", type);
 			}
 			return "NO IMPACT ON RADIO COMMUNICATIONS";

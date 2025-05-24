@@ -305,7 +305,7 @@ public class RadMonAPI extends AbstractAPRSProcessor {
 		
 		bld.append(DEFAULT_REST_URL);
 		
-		bld.append("function=" + Function.setlatitudelongitude.name());
+		bld.append("function=" + Function.SET_LAT_LON.name());
 		
 		bld.append("&user=");
 		bld.append(jtfUserName.getText());
@@ -334,7 +334,7 @@ public class RadMonAPI extends AbstractAPRSProcessor {
 			
 			bld.append(DEFAULT_REST_URL);
 			
-			bld.append("function=" + Function.submit.name());
+			bld.append("function=" + Function.SUBMIT.name());
 			
 			bld.append("&user=");
 			bld.append(jtfUserName.getText());
@@ -365,7 +365,7 @@ public class RadMonAPI extends AbstractAPRSProcessor {
 			
 			bld.append(DEFAULT_REST_URL);
 			
-			bld.append("function=" + Function.submit.name());
+			bld.append("function=" + Function.SUBMIT.name());
 			
 			bld.append("&user=");
 			bld.append(jtfUserName.getText());
@@ -401,7 +401,7 @@ public class RadMonAPI extends AbstractAPRSProcessor {
 		
 		bld.append(DEFAULT_REST_URL);
 		
-		bld.append("function=" + Function.setconversionfactor.name());
+		bld.append("function=" + Function.SET_CONVERSION_FACTOR.name());
 		
 		bld.append("&user=");
 		bld.append(jtfUserName.getText());
@@ -428,7 +428,7 @@ public class RadMonAPI extends AbstractAPRSProcessor {
 		
 		bld.append(DEFAULT_REST_URL);
 		
-		bld.append("function=" + Function.setwarnalert.name());
+		bld.append("function=" + Function.SET_WARN_ALERT.name());
 		
 		bld.append("&user=");
 		bld.append(jtfUserName.getText());
@@ -451,7 +451,7 @@ public class RadMonAPI extends AbstractAPRSProcessor {
 		
 		bld.append(DEFAULT_REST_URL);
 		
-		bld.append("function=" + Function.setalertsenabled.name());
+		bld.append("function=" + Function.SET_ALERTS_ENABLED.name());
 		
 		bld.append("&user=");
 		bld.append(jtfUserName.getText());
@@ -468,7 +468,7 @@ public class RadMonAPI extends AbstractAPRSProcessor {
 		
 		bld.append(DEFAULT_REST_URL);
 		
-		bld.append("function=" + Function.setalertsdisabled.name());
+		bld.append("function=" + Function.SET_ALERTS_DISABLED.name());
 		
 		bld.append("&user=");
 		bld.append(jtfUserName.getText());

@@ -102,7 +102,7 @@ public class CachePreloader {
 				executor.shutdown();
 				executor.awaitTermination(3, TimeUnit.SECONDS);
 				LOG.log(Level.INFO, "Initializing CachePreloader executor service has gracefully terminated");
-			} catch (InterruptedException e) {
+			} catch (InterruptedException _) {
 				executor.shutdownNow();
 				LOG.log(Level.SEVERE, "Initializing CachePreloader executor service has timed out after 3 seconds of waiting to terminate processes.");
 				Thread.currentThread().interrupt();

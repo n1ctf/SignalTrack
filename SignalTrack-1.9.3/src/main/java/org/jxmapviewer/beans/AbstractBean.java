@@ -147,13 +147,13 @@ public abstract class AbstractBean {
 	 * in the constructor, and the "this" argument is not valid until after super
 	 * construction. Hence, delegation instead of extension
 	 */
-	private transient PropertyChangeSupport pcs;
+	private PropertyChangeSupport pcs;
 
 	/**
 	 * Helper class that manages all the veto property change notification
 	 * machinery.
 	 */
-	private transient VetoableChangeSupport vcs;
+	private VetoableChangeSupport vcs;
 
 	/** Creates a new instance of AbstractBean */
 	protected AbstractBean() {

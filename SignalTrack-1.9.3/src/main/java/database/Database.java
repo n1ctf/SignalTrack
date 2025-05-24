@@ -1373,7 +1373,7 @@ public class Database implements AutoCloseable {
         				executor.shutdown();
         				executor.awaitTermination(3, TimeUnit.SECONDS);
         				LOG.log(Level.INFO, "Database executor Service has gracefully terminated");
-        			} catch (InterruptedException e) {
+        			} catch (InterruptedException _) {
         				executor.shutdownNow();
         				LOG.log(Level.SEVERE, "Database executorService has timed out after 3 seconds of waiting to terminate processes.");
         				Thread.currentThread().interrupt();

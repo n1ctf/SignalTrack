@@ -47,7 +47,7 @@ public class NasaSolarEnergeticParticleMonitor extends AbstractNasaMonitor {
 	private String sepID;
 	private ZonedDateTime eventTime ;
 	private String displayName;
-	private SolarRadiationStorm solarRadiationStorm = SolarRadiationStorm.S0;
+	private SolarRadiationStormScale solarRadiationStormScale = SolarRadiationStormScale.S0;
 	private URL link;
 	private double mev = -1;
 	private boolean noEvents;
@@ -117,53 +117,57 @@ public class NasaSolarEnergeticParticleMonitor extends AbstractNasaMonitor {
 			String jsonString = null;
             try (JsonReader jsonReader = new JsonReader(isDebug())) {
                 jsonString = jsonReader.readJsonFromUrl(urlGroup);
-				if (jsonString != null && jsonString.length() > 2 && (eventTime == null || getAgeOfEventInMinutes() < getPersistenceMinutes())) {
+				if (jsonString != null && jsonString.length() > 2 && (activityTime == null || getAgeOfEventInMinutes() < getPersistenceMinutes())) {
 					noEvents = false;
+					
 					final JSONArray jsonArray = new JSONArray(jsonString);
 					final JSONObject lastElement = (JSONObject) jsonArray.get(jsonArray.length() - 1);
+					
 					if (isDebug()) {
-						LOG.log(Level.INFO,
-							"******** NasaSolarEnergeticParticleMonitor.Update.JSONObject.lastElement -> {0}", lastElement);
+						LOG.log(Level.INFO, "******** NasaSolarEnergeticParticleMonitor.Update.JSONObject.lastElement -> {0}", lastElement);
 					}
+					
 					try {
 						pcs.firePropertyChange(Event.SEP_ID.name(), sepID, lastElement.getString("sepID"));
 						sepID = lastElement.getString("sepID");
-						activityTime = getCurrentUTC();
-					} catch (JSONException ex) {
+					} catch (JSONException _) {
 						if (isDebug()) {
 							LOG.log(Level.INFO, "**** NO sepID is provided ****");
 						}
 					}
+					
 					try {
 						pcs.firePropertyChange(Event.EVENT_TIME.name(), eventTime, fromNasaDateTimeGroup(lastElement.getString("eventTime")));
 						eventTime = fromNasaDateTimeGroup(lastElement.getString("eventTime"));
-					} catch (JSONException ex) {
+						activityTime = eventTime;
+					} catch (JSONException _) {
 						if (isDebug()) {
 							LOG.log(Level.INFO, "**** NO SEP eventTime is provided ****");
 						}
 					}
+					
 					try {
 						final JSONArray instrumentsArray = lastElement.getJSONArray("instruments");					
 						final String str = instrumentsArray.get(0).toString();
 						pcs.firePropertyChange(Event.DISPLAY_NAME.name(), displayName, str);
 						final double v = getMeV(str);
-						final SolarRadiationStorm srs = getSolarRadiationStormSeverity(v);
-						pcs.firePropertyChange(Event.SOLAR_RADIATION_STORM.name(), solarRadiationStorm, srs); 
+						final SolarRadiationStormScale srs = getSolarRadiationStormSeverity(v);
+						pcs.firePropertyChange(Event.SOLAR_RADIATION_STORM.name(), solarRadiationStormScale, srs); 
 						pcs.firePropertyChange(Event.MEV.name(), mev, v);
 						mev = v;
-						solarRadiationStorm = srs;
+						solarRadiationStormScale = srs;
 						displayName = str;
-					} catch (JSONException ex) {
+					} catch (JSONException _) {
 						if (isDebug()) {
-							ex.printStackTrace();
 							LOG.log(Level.INFO, "**** NO SEP displayName is provided ****");
 						}
 					}
+					
 					try {
 						final URL url = new URI(lastElement.getString("link")).toURL();
 						pcs.firePropertyChange(Event.LINK.name(), link, url);
 						link = url;
-					} catch (JSONException | URISyntaxException ex) {
+					} catch (JSONException | URISyntaxException _) {
 						if (isDebug()) {
 							LOG.log(Level.INFO, "**** NO link is provided ****");
 						}
@@ -215,7 +219,7 @@ public class NasaSolarEnergeticParticleMonitor extends AbstractNasaMonitor {
 						LOG.log(Level.INFO, "NO SOLAR ENERGETIC PARTICLE EVENTS IN THE LAST {0} Minutes", persistenceMinutes);
 					}
 				}
-			} catch (IOException | JSONException ex) {
+			} catch (IOException | JSONException _) {
 				LOG.log(Level.WARNING, "Error Retrieving: {0}", urlGroup);
 				LOG.log(Level.WARNING, "Returned json String: {0}", jsonString);
 				pcs.firePropertyChange(Event.NETWORK_ERROR.name(), null, "Error Retrieving: " + urlGroup);
@@ -251,19 +255,19 @@ public class NasaSolarEnergeticParticleMonitor extends AbstractNasaMonitor {
 	        return sb.toString();
 	    }
 		
-		private SolarRadiationStorm getSolarRadiationStormSeverity(double mev) {
+		private SolarRadiationStormScale getSolarRadiationStormSeverity(double mev) {
 			if (mev > 10E4) {
-				return SolarRadiationStorm.S5;
+				return SolarRadiationStormScale.S5;
 			} else if (mev > 10E3) {
-				return SolarRadiationStorm.S4;
+				return SolarRadiationStormScale.S4;
 			} else if (mev > 10E2) {
-				return SolarRadiationStorm.S3;
+				return SolarRadiationStormScale.S3;
 			} else if (mev > 10E1) {
-				return SolarRadiationStorm.S2;
+				return SolarRadiationStormScale.S2;
 			} else if (mev > 10) {
-				return SolarRadiationStorm.S1;
+				return SolarRadiationStormScale.S1;
 			} else {
-				return SolarRadiationStorm.S0;
+				return SolarRadiationStormScale.S0;
 			}
 	    }
 		

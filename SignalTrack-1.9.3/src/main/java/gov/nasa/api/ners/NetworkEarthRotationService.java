@@ -381,7 +381,7 @@ public final class NetworkEarthRotationService implements AutoCloseable {
 				queryScheduler.shutdown();
 				queryScheduler.awaitTermination(5, TimeUnit.SECONDS);
 				LOG.log(Level.INFO, "NetworkEarthRotationService.queryScheduler service has gracefully terminated");
-			} catch (InterruptedException e) {
+			} catch (InterruptedException _) {
 				queryScheduler.shutdownNow();
 				LOG.log(Level.SEVERE, "NetworkEarthRotationService.queryScheduler service has timed out after 5 seconds of waiting to terminate processes.");
 				Thread.currentThread().interrupt();
@@ -394,7 +394,7 @@ public final class NetworkEarthRotationService implements AutoCloseable {
 				updateScheduler.shutdown();
 				updateScheduler.awaitTermination(5, TimeUnit.SECONDS);
 				LOG.log(Level.INFO, "NetworkEarthRotationService.updateScheduler service has gracefully terminated");
-			} catch (InterruptedException e) {
+			} catch (InterruptedException _) {
 				updateScheduler.shutdownNow();
 				LOG.log(Level.SEVERE, "NetworkEarthRotationService.updateScheduler service has timed out after 5 seconds of waiting to terminate processes.");
 				Thread.currentThread().interrupt();

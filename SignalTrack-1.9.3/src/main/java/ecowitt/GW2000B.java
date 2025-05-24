@@ -183,10 +183,11 @@ public class GW2000B extends AbstractEnvironmentSensor {
 			try {
 				LOG.log(Level.INFO, "Initializing GW2000B.scheduler service termination....");
 				scheduler.shutdown();
-				scheduler.awaitTermination(20, TimeUnit.SECONDS);
+				scheduler.awaitTermination(2, TimeUnit.SECONDS);
 				LOG.log(Level.INFO, "GW2000B.scheduler service has gracefully terminated");
-			} catch (InterruptedException e) {
-				LOG.log(Level.SEVERE, "GW2000B.scheduler service has timed out after 20 seconds of waiting to terminate processes.");
+			} catch (InterruptedException _) {
+				scheduler.shutdownNow();
+				LOG.log(Level.SEVERE, ";GW2000B.scheduler service has timed out after 22 seconds of waiting to terminate processes.");
 				Thread.currentThread().interrupt();
 			}
 		}
@@ -208,10 +209,11 @@ public class GW2000B extends AbstractEnvironmentSensor {
 			try {
 				LOG.log(Level.INFO, "Initializing GW2000B.executor service termination....");
 				executor.shutdown();
-				executor.awaitTermination(20, TimeUnit.SECONDS);
+				executor.awaitTermination(2, TimeUnit.SECONDS);
 				LOG.log(Level.INFO, "GW2000B.executor service has gracefully terminated");
-			} catch (InterruptedException e) {
-				LOG.log(Level.SEVERE, "GW2000B.executor service has timed out after 20 seconds of waiting to terminate processes.");
+			} catch (InterruptedException _) {
+				executor.shutdownNow();
+				LOG.log(Level.SEVERE, "GW2000B.executor service has timed out after 2 seconds of waiting to terminate processes.");
 				Thread.currentThread().interrupt();
 			}
 		}

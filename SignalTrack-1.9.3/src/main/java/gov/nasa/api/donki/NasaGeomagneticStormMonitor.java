@@ -46,7 +46,7 @@ public class NasaGeomagneticStormMonitor extends AbstractNasaMonitor {
 	
 	private String gstID;
 	private int kpIndex;
-	private GeomagneticStorm geomagneticStorm = GeomagneticStorm.G0;
+	private GeomagneticStormScale geomagneticStormScale = GeomagneticStormScale.G0;
 	private ZonedDateTime startTime;
 	private ZonedDateTime observedTime;
 	private ZonedDateTime activityTime;
@@ -121,61 +121,67 @@ public class NasaGeomagneticStormMonitor extends AbstractNasaMonitor {
 			String jsonString = null;
             try (JsonReader jsonReader = new JsonReader(isDebug())) {
                 jsonString = jsonReader.readJsonFromUrl(urlGroup);
-				if (jsonString != null && jsonString.length() > 2 && (startTime == null || getAgeOfEventInMinutes() < getPersistenceMinutes())) {
+				if (jsonString != null && jsonString.length() > 2 && (activityTime == null || getAgeOfEventInMinutes() < getPersistenceMinutes())) {
 					noEvents = false;
+					
 					final JSONArray jsonArray = new JSONArray(jsonString);
 					final JSONObject lastElement = (JSONObject) jsonArray.get(jsonArray.length() - 1);
+					
 					if (isDebug()) {
 						LOG.log(Level.INFO, "******** NasaGSTMonitor.Update.JSONObject.lastElement -> {0}", lastElement);
 					}
+					
 					try {
 						pcs.firePropertyChange(Event.GST_ID.name(), gstID, lastElement.getString("gstID"));
 						gstID = lastElement.getString("gstID");
-						activityTime = getCurrentUTC();
-					} catch (JSONException ex) {
+					} catch (JSONException _) {
 						if (isDebug()) {
 							LOG.log(Level.INFO, "**** NO gstID is provided ****");
 						}
 					}
+					
 					try {
-						pcs.firePropertyChange(Event.START_TIME.name(), startTime,
-								fromNasaDateTimeGroup(lastElement.getString("startTime")));
+						pcs.firePropertyChange(Event.START_TIME.name(), startTime, fromNasaDateTimeGroup(lastElement.getString("startTime")));
 						startTime = fromNasaDateTimeGroup(lastElement.getString("startTime"));
-					} catch (JSONException ex) {
+						activityTime = startTime;
+					} catch (JSONException _) {
 						if (isDebug()) {
 							LOG.log(Level.INFO, "**** NO GST startTime is provided ****");
 						}
 					}
+					
 					try {
 						final int kp = lastElement.getInt("kpIndex");
-						final GeomagneticStorm gst = getGeomagneticStormLevel(kp);
-						pcs.firePropertyChange(Event.GEOMAGNETIC_STORM.name(), geomagneticStorm, gst);
+						final GeomagneticStormScale gst = getGeomagneticStormLevel(kp);
+						pcs.firePropertyChange(Event.GEOMAGNETIC_STORM.name(), geomagneticStormScale, gst);
 						pcs.firePropertyChange(Event.KP_INDEX.name(), kpIndex, kp);
 						kpIndex = kp;
-						geomagneticStorm = gst;
-					} catch (JSONException ex) {
+						geomagneticStormScale = gst;
+					} catch (JSONException _) {
 						if (isDebug()) {
 							LOG.log(Level.INFO, "**** NO GST kpIndex is provided ****");
 						}
 					}
+					
 					try {
-						pcs.firePropertyChange(Event.OBSERVED_TIME.name(), observedTime,
-								fromNasaDateTimeGroup(lastElement.getString("observedTime")));
+						pcs.firePropertyChange(Event.OBSERVED_TIME.name(), observedTime, fromNasaDateTimeGroup(lastElement.getString("observedTime")));
 						observedTime = fromNasaDateTimeGroup(lastElement.getString("observedTime"));
-					} catch (JSONException ex) {
+					} catch (JSONException _) {
 						if (isDebug()) {
 							LOG.log(Level.INFO, "**** NO GST observedTime is provided ****");
 						}
 					}
+					
 					try {
 						final URL url = new URI(lastElement.getString("link")).toURL();
 						pcs.firePropertyChange(Event.LINK.name(), link, url);
 						link = url;
-					} catch (JSONException | URISyntaxException ex) {
+					} catch (JSONException | URISyntaxException _) {
 						if (isDebug()) {
 							LOG.log(Level.INFO, "**** NO link is provided ****");
 						}
 					} 
+					
 					if (isDebug()) {
 						LOG.log(Level.INFO, "{0} {1} {2} {3} {4} {5} {6} {7} {8} {9} {10} {11} {12} {13}",
 							new Object[] {
@@ -226,7 +232,7 @@ public class NasaGeomagneticStormMonitor extends AbstractNasaMonitor {
 						LOG.log(Level.INFO, "**** NO REPORTABLE GEOMAGNETIC STORMS IN THE LAST {0} Minutes", persistenceMinutes);
 					}
 				}
-            } catch (IOException | JSONException ex) {
+            } catch (IOException | JSONException _) {
 				LOG.log(Level.WARNING, "Error Retrieving: {0}", urlGroup);
 				LOG.log(Level.WARNING, "Returned json String: {0}", jsonString);
 				pcs.firePropertyChange(Event.NETWORK_ERROR.name(), null, "Error Retrieving: " + urlGroup);
@@ -235,14 +241,14 @@ public class NasaGeomagneticStormMonitor extends AbstractNasaMonitor {
 			}
 		} 
 		
-		private GeomagneticStorm getGeomagneticStormLevel(int kp) {
+		private GeomagneticStormScale getGeomagneticStormLevel(int kp) {
 			return switch (kp) {
-				case 9 -> GeomagneticStorm.G5;
-				case 8 -> GeomagneticStorm.G4;
-				case 7 -> GeomagneticStorm.G3;
-				case 6 -> GeomagneticStorm.G2;
-				case 5 -> GeomagneticStorm.G1;
-				default -> GeomagneticStorm.G0;
+				case 9 -> GeomagneticStormScale.G5;
+				case 8 -> GeomagneticStormScale.G4;
+				case 7 -> GeomagneticStormScale.G3;
+				case 6 -> GeomagneticStormScale.G2;
+				case 5 -> GeomagneticStormScale.G1;
+				default -> GeomagneticStormScale.G0;
 			};
 	    }
 		

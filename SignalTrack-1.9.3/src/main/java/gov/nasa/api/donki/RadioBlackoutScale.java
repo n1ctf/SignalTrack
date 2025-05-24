@@ -1,6 +1,6 @@
 package gov.nasa.api.donki;
 
-public enum RadioBlackout {
+public enum RadioBlackoutScale {
 	R0,
 	R1,
 	R2,
