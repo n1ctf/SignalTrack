@@ -118,7 +118,7 @@ public class CalibrationComponent extends JDialog {
     private JFormattedTextField saturationTextField;
 
     private transient HierarchyListener hl;
-    private transient CalibrationDataObject cdo;
+    private final transient CalibrationDataObject cdo;
     
     public CalibrationComponent(final CalibrationDataObject cdo) {
     	this.cdo = cdo;
@@ -175,7 +175,7 @@ public class CalibrationComponent extends JDialog {
             dBmComboBox.setSelectedIndex(selectedIndex >= dBmComboBox.getComponentCount() ? 0 : selectedIndex);
             dBmComboBox.setEnabled(true);
             valid = true;
-        } catch (IllegalArgumentException ex) {
+        } catch (IllegalArgumentException _) {
         	setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
         	LOG.log(Level.INFO, "Calibration record for {0} {1} {2} is incomplete", new Object[] { 
         		cdo.getManufacturer(), cdo.getModelString(), cdo.getSerialString() });     
@@ -200,9 +200,9 @@ public class CalibrationComponent extends JDialog {
                 manufacturerComboBoxModel.addAll(RigCodes.getManufacturerSet());
             }
             if (source.contains(AbstractRadioReceiver.getProviderCatalog().get(0))) {
-                List<String> list = new ArrayList<>();
+            	final List<String> list = new ArrayList<>();
                 for (String signalTrackCatalogEntry : AbstractRadioReceiver.getRadioCatalog()) {
-                    AbstractRadioReceiver abstractRadioReceiver = AbstractRadioReceiver.getRadioInstance(signalTrackCatalogEntry);
+                	final AbstractRadioReceiver abstractRadioReceiver = AbstractRadioReceiver.getRadioInstance(signalTrackCatalogEntry);
                     if (list.isEmpty() || !list.contains(abstractRadioReceiver.getManufacturer())) {
                         list.add(abstractRadioReceiver.getManufacturer());
                         manufacturerComboBoxModel.addElement(abstractRadioReceiver.getManufacturer());
@@ -232,9 +232,9 @@ public class CalibrationComponent extends JDialog {
                 modelComboBoxModel.addAll(RigCodes.getModelSetForManufacturer(mfr));
             }
             if (source.contains(AbstractRadioReceiver.getProviderCatalog().get(0))) {
-                List<String> list = new ArrayList<>();
+            	final List<String> list = new ArrayList<>();
                 for (String signalTrackCatalogEntry : AbstractRadioReceiver.getRadioCatalog()) {
-                    AbstractRadioReceiver abstractRadioReceiver = AbstractRadioReceiver.getRadioInstance(signalTrackCatalogEntry);
+                	final AbstractRadioReceiver abstractRadioReceiver = AbstractRadioReceiver.getRadioInstance(signalTrackCatalogEntry);
                     if (abstractRadioReceiver.getManufacturer().toUpperCase(Locale.getDefault()).contains(mfr.toUpperCase(Locale.getDefault()))
                             && (!list.isEmpty() || !list.contains(abstractRadioReceiver.getModel()))) {
                         list.add(abstractRadioReceiver.getModel());
@@ -264,11 +264,9 @@ public class CalibrationComponent extends JDialog {
                 } catch (final InterruptedException e) {
                     LOG.log(Level.WARNING, null, e);
                     Thread.currentThread().interrupt();
-                } catch (final ExecutionException e) {
+                } catch (ExecutionException | IllegalArgumentException e) {
                     LOG.log(Level.WARNING, null, e);
-                } catch (final IllegalArgumentException e) {
-                	LOG.log(Level.WARNING, null, e);
-                }
+                } 
             }
         };
         worker.execute();
@@ -322,7 +320,7 @@ public class CalibrationComponent extends JDialog {
         rssiTextField.addKeyListener(new KeyListener() {
             @Override
             public void keyTyped(KeyEvent event) {
-
+            	// NOOP
             }
 
             @Override
@@ -332,7 +330,7 @@ public class CalibrationComponent extends JDialog {
 
             @Override
             public void keyReleased(KeyEvent event) {
-
+            	// NOOP
             }
         });
 
@@ -351,7 +349,7 @@ public class CalibrationComponent extends JDialog {
         snTextField.addKeyListener(new KeyListener() {
             @Override
             public void keyTyped(KeyEvent event) {
-
+            	// NOOP
             }
 
             @Override
@@ -361,7 +359,7 @@ public class CalibrationComponent extends JDialog {
 
             @Override
             public void keyReleased(KeyEvent event) {
-
+            	// NOOP
             }
         });
 
@@ -380,7 +378,7 @@ public class CalibrationComponent extends JDialog {
         quietingTextField.addKeyListener(new KeyListener() {
             @Override
             public void keyTyped(KeyEvent event) {
-
+            	// NOOP
             }
 
             @Override
@@ -390,7 +388,7 @@ public class CalibrationComponent extends JDialog {
 
             @Override
             public void keyReleased(KeyEvent event) {
-
+            	// NOOP
             }
         });
 
@@ -409,7 +407,7 @@ public class CalibrationComponent extends JDialog {
         berTextField.addKeyListener(new KeyListener() {
             @Override
             public void keyTyped(KeyEvent event) {
-
+            	// NOOP
             }
 
             @Override
@@ -419,7 +417,7 @@ public class CalibrationComponent extends JDialog {
 
             @Override
             public void keyReleased(KeyEvent event) {
-
+            	// NOOP
             }
         });
 
@@ -438,7 +436,7 @@ public class CalibrationComponent extends JDialog {
         sinadTextField.addKeyListener(new KeyListener() {
             @Override
             public void keyTyped(KeyEvent event) {
-
+            	// NOOP
             }
 
             @Override
@@ -448,7 +446,7 @@ public class CalibrationComponent extends JDialog {
 
             @Override
             public void keyReleased(KeyEvent event) {
-
+            	// NOOP
             }
         });
 
@@ -467,7 +465,7 @@ public class CalibrationComponent extends JDialog {
         saturationTextField.addKeyListener(new KeyListener() {
             @Override
             public void keyTyped(KeyEvent event) {
-
+            	// NOOP
             }
 
             @Override
@@ -477,7 +475,7 @@ public class CalibrationComponent extends JDialog {
 
             @Override
             public void keyReleased(KeyEvent event) {
-
+            	// NOOP
             }
         });
 
@@ -496,7 +494,7 @@ public class CalibrationComponent extends JDialog {
         noiseFloorTextField.addKeyListener(new KeyListener() {
             @Override
             public void keyTyped(KeyEvent event) {
-
+            	// NOOP
             }
 
             @Override
@@ -506,7 +504,7 @@ public class CalibrationComponent extends JDialog {
 
             @Override
             public void keyReleased(KeyEvent event) {
-
+            	// NOOP
             }
         });
 
@@ -525,7 +523,7 @@ public class CalibrationComponent extends JDialog {
         acrTextField.addKeyListener(new KeyListener() {
             @Override
             public void keyTyped(KeyEvent event) {
-
+            	// NOOP
             }
 
             @Override
@@ -535,7 +533,7 @@ public class CalibrationComponent extends JDialog {
 
             @Override
             public void keyReleased(KeyEvent event) {
-
+            	// NOOP
             }
         });
 
@@ -605,26 +603,26 @@ public class CalibrationComponent extends JDialog {
 
     @SuppressWarnings("unchecked")
     private void sourceComboBoxItemChangedEvent(ItemEvent event) {
-        JComboBox<String> cb = (JComboBox<String>) event.getSource();
+        final JComboBox<String> cb = (JComboBox<String>) event.getSource();
         cdo.setSource(getSourceString());
         loadManufacturerStringComboBox(sourceComboBox.getSelectedItem().toString());
         loadModelStringComboBox(cb.getSelectedItem().toString(), manufacturerComboBox.getSelectedItem().toString());
     }
     
     private void rssiTextFieldFocusLostEvent(FocusEvent event) {
-        JFormattedTextField tf = (JFormattedTextField) event.getSource();
+    	final JFormattedTextField tf = (JFormattedTextField) event.getSource();
         tf.setFont(new Font("Tahoma", Font.PLAIN, 11));
         cdo.setRssi(dBmComboBox.getSelectedIndex(), Integer.parseInt(tf.getText()));
         updateChart();
     }
     
     private void rssiTextFieldFocusGainedEvent(FocusEvent event) {
-        JFormattedTextField tf = (JFormattedTextField) event.getSource();
+    	final JFormattedTextField tf = (JFormattedTextField) event.getSource();
         tf.setFont(new Font("Tahoma", Font.BOLD, 11));
     }
 
     private void rssiTextFieldKeyPressedEvent(KeyEvent event) {
-        JFormattedTextField tf = (JFormattedTextField) event.getSource();
+    	final JFormattedTextField tf = (JFormattedTextField) event.getSource();
         if (event.getKeyCode() == KeyEvent.VK_ENTER) {
             tf.setFont(new Font("Tahoma", Font.PLAIN, 11));
             tf.transferFocus();
@@ -632,18 +630,18 @@ public class CalibrationComponent extends JDialog {
     }
 
     private void snTextFieldFocusLostEvent(FocusEvent event) {
-        JFormattedTextField tf = (JFormattedTextField) event.getSource();
+    	final JFormattedTextField tf = (JFormattedTextField) event.getSource();
         tf.setFont(new Font("Tahoma", Font.PLAIN, 11));
         cdo.setSerialString(snTextField.getText());
     }
 
     private void snTextFieldFocusGainedEvent(FocusEvent event) {
-        JFormattedTextField tf = (JFormattedTextField) event.getSource();
+    	final JFormattedTextField tf = (JFormattedTextField) event.getSource();
         tf.setFont(new Font("Tahoma", Font.BOLD, 11));
     }
 
     private void snTextFieldKeyPressedEvent(KeyEvent event) {
-        JFormattedTextField tf = (JFormattedTextField) event.getSource();
+    	final JFormattedTextField tf = (JFormattedTextField) event.getSource();
         if (event.getKeyCode() == KeyEvent.VK_ENTER) {
             tf.setFont(new Font("Tahoma", Font.PLAIN, 11));
             tf.transferFocus();
@@ -651,7 +649,7 @@ public class CalibrationComponent extends JDialog {
     }
 
     private void noiseFloorTextFieldFocusLostEvent(FocusEvent event) {
-        JFormattedTextField tf = (JFormattedTextField) event.getSource();
+    	final JFormattedTextField tf = (JFormattedTextField) event.getSource();
         tf.setFont(new Font("Tahoma", Font.PLAIN, 11));
         cdo.setNoiseFloor(Double.parseDouble(tf.getText()));
         loaddBmComboBox();
@@ -659,12 +657,12 @@ public class CalibrationComponent extends JDialog {
     }
 
     private void noiseFloorTextFieldFocusGainedEvent(FocusEvent event) {
-        JFormattedTextField tf = (JFormattedTextField) event.getSource();
+    	final JFormattedTextField tf = (JFormattedTextField) event.getSource();
         tf.setFont(new Font("Tahoma", Font.BOLD, 11));
     }
 
     private void noiseFloorTextFieldKeyPressedEvent(KeyEvent event) {
-        JFormattedTextField tf = (JFormattedTextField) event.getSource();
+    	final JFormattedTextField tf = (JFormattedTextField) event.getSource();
         if (event.getKeyCode() == KeyEvent.VK_ENTER) {
             tf.setFont(new Font("Tahoma", Font.PLAIN, 11));
             tf.transferFocus();
@@ -672,7 +670,7 @@ public class CalibrationComponent extends JDialog {
     }
 
     private void saturationTextFieldFocusLostEvent(FocusEvent event) {
-        JFormattedTextField tf = (JFormattedTextField) event.getSource();
+    	final JFormattedTextField tf = (JFormattedTextField) event.getSource();
         tf.setFont(new Font("Tahoma", Font.PLAIN, 11));
         cdo.setSaturation(Double.parseDouble(tf.getText()));
         loaddBmComboBox();
@@ -680,12 +678,12 @@ public class CalibrationComponent extends JDialog {
     }
 
     private void saturationTextFieldFocusGainedEvent(FocusEvent event) {
-        JFormattedTextField tf = (JFormattedTextField) event.getSource();
+    	final JFormattedTextField tf = (JFormattedTextField) event.getSource();
         tf.setFont(new Font("Tahoma", Font.BOLD, 11));
     }
 
     private void saturationTextFieldKeyPressedEvent(KeyEvent event) {
-        JFormattedTextField tf = (JFormattedTextField) event.getSource();
+    	final JFormattedTextField tf = (JFormattedTextField) event.getSource();
         if (event.getKeyCode() == KeyEvent.VK_ENTER) {
             tf.setFont(new Font("Tahoma", Font.PLAIN, 11));
             tf.transferFocus();
@@ -693,18 +691,18 @@ public class CalibrationComponent extends JDialog {
     }
 
     private void acrTextFieldFocusLostEvent(FocusEvent event) {
-        JFormattedTextField tf = (JFormattedTextField) event.getSource();
+    	final JFormattedTextField tf = (JFormattedTextField) event.getSource();
         tf.setFont(new Font("Tahoma", Font.PLAIN, 11));
         cdo.setAdjacentChannelRejection(Double.parseDouble(tf.getText()));
     }
 
     private void acrTextFieldFocusGainedEvent(FocusEvent event) {
-        JFormattedTextField tf = (JFormattedTextField) event.getSource();
+    	final JFormattedTextField tf = (JFormattedTextField) event.getSource();
         tf.setFont(new Font("Tahoma", Font.BOLD, 11));
     }
 
     private void acrTextFieldKeyPressedEvent(KeyEvent event) {
-        JFormattedTextField tf = (JFormattedTextField) event.getSource();
+    	final JFormattedTextField tf = (JFormattedTextField) event.getSource();
         if (event.getKeyCode() == KeyEvent.VK_ENTER) {
             tf.setFont(new Font("Tahoma", Font.PLAIN, 11));
             tf.transferFocus();
@@ -712,18 +710,18 @@ public class CalibrationComponent extends JDialog {
     }
 
     private void sinadTextFieldFocusLostEvent(FocusEvent event) {
-        JFormattedTextField tf = (JFormattedTextField) event.getSource();
+    	final JFormattedTextField tf = (JFormattedTextField) event.getSource();
         tf.setFont(new Font("Tahoma", Font.PLAIN, 11));
         cdo.setSignalReqFor12dBSINAD(Double.parseDouble(tf.getText()));
     }
 
     private void sinadTextFieldFocusGainedEvent(FocusEvent event) {
-        JFormattedTextField tf = (JFormattedTextField) event.getSource();
+    	final JFormattedTextField tf = (JFormattedTextField) event.getSource();
         tf.setFont(new Font("Tahoma", Font.BOLD, 11));
     }
 
     private void sinadTextFieldKeyPressedEvent(KeyEvent event) {
-        JFormattedTextField tf = (JFormattedTextField) event.getSource();
+    	final JFormattedTextField tf = (JFormattedTextField) event.getSource();
         if (event.getKeyCode() == KeyEvent.VK_ENTER) {
             tf.setFont(new Font("Tahoma", Font.PLAIN, 11));
             tf.transferFocus();
@@ -731,18 +729,18 @@ public class CalibrationComponent extends JDialog {
     }
 
     private void berTextFieldFocusLostEvent(FocusEvent event) {
-        JFormattedTextField tf = (JFormattedTextField) event.getSource();
+    	final JFormattedTextField tf = (JFormattedTextField) event.getSource();
         tf.setFont(new Font("Tahoma", Font.PLAIN, 11));
         cdo.setSignalReqFor5PctBER(Double.parseDouble(tf.getText()));
     }
 
     private void berTextFieldFocusGainedEvent(FocusEvent event) {
-        JFormattedTextField tf = (JFormattedTextField) event.getSource();
+    	final JFormattedTextField tf = (JFormattedTextField) event.getSource();
         tf.setFont(new Font("Tahoma", Font.BOLD, 11));
     }
 
     private void berTextFieldKeyPressedEvent(KeyEvent event) {
-        JFormattedTextField tf = (JFormattedTextField) event.getSource();
+    	final JFormattedTextField tf = (JFormattedTextField) event.getSource();
         if (event.getKeyCode() == KeyEvent.VK_ENTER) {
             tf.setFont(new Font("Tahoma", Font.PLAIN, 11));
             tf.transferFocus();
@@ -750,18 +748,18 @@ public class CalibrationComponent extends JDialog {
     }
 
     private void quietingTextFieldFocusLostEvent(FocusEvent event) {
-        JFormattedTextField tf = (JFormattedTextField) event.getSource();
+    	final JFormattedTextField tf = (JFormattedTextField) event.getSource();
         tf.setFont(new Font("Tahoma", Font.PLAIN, 11));
         cdo.setSignalReqFor20dBQuieting(Double.parseDouble(tf.getText()));
     }
 
     private void quietingTextFieldFocusGainedEvent(FocusEvent event) {
-        JFormattedTextField tf = (JFormattedTextField) event.getSource();
+    	final JFormattedTextField tf = (JFormattedTextField) event.getSource();
         tf.setFont(new Font("Tahoma", Font.BOLD, 11));
     }
 
     private void quietingTextFieldKeyPressedEvent(KeyEvent event) {
-        JFormattedTextField tf = (JFormattedTextField) event.getSource();
+    	final JFormattedTextField tf = (JFormattedTextField) event.getSource();
         if (event.getKeyCode() == KeyEvent.VK_ENTER) {
             tf.setFont(new Font("Tahoma", Font.PLAIN, 11));
             tf.transferFocus();
@@ -1108,7 +1106,7 @@ public class CalibrationComponent extends JDialog {
                 .addComponent(rssiSetButton)
                 .addGap(0, 11, Short.MAX_VALUE)));
 
-        GroupLayout calibrationGraphicLayout = new GroupLayout(calibrationGraphic);
+        final GroupLayout calibrationGraphicLayout = new GroupLayout(calibrationGraphic);
 
         calibrationGraphic.setLayout(calibrationGraphicLayout);
 

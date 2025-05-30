@@ -217,7 +217,7 @@ public class Icom_PCR2500 extends AbstractRadioReceiver implements TeletypeInter
     private volatile boolean terminated;
     private volatile boolean allowQueueing;
     
-    private AbstractTeletypeController tty = AbstractTeletypeController.getTTyPortInstance(AbstractTeletypeController.getCatalogMap().getKey("JSSC TTY Port v2.9.5"), false);
+    private final AbstractTeletypeController tty = AbstractTeletypeController.getTTyPortInstance(AbstractTeletypeController.getCatalogMap().getKey("JSSC TTY Port v2.9.5"), false);
 
 	private PropertyChangeListener serialPortPropertyChangeListener;
 
@@ -238,7 +238,7 @@ public class Icom_PCR2500 extends AbstractRadioReceiver implements TeletypeInter
 			if (TTYEvents.RX_CHAR.name().equals(event.getPropertyName())) {
 				try {
 					String data = null;
-					StringBuilder sb = new StringBuilder();
+					final StringBuilder sb = new StringBuilder();
 					int len;
 					do {
 						readBuffer = tty.readBytes();
@@ -359,7 +359,7 @@ public class Icom_PCR2500 extends AbstractRadioReceiver implements TeletypeInter
     @Override
     public void setDPL(int dpl) {
         this.dpl = dpl;
-        int dplCode = dpl;
+        final int dplCode = dpl;
         if (dplCode >= 0 && dplCode <= Integer.parseInt(getDigitalSquelchValues()[getDigitalSquelchValues().length - 1])) {
             final String digitalSquelchHexCode = Utility.integerToHex(getDigitalSquelchOrdinal(dplCode));
             if (allowQueueing) {
@@ -378,7 +378,7 @@ public class Icom_PCR2500 extends AbstractRadioReceiver implements TeletypeInter
     @Override
     public void setPL(int pl) {
         this.pl = pl;
-        double plFreq = pl / 10D;
+        final double plFreq = pl / 10D;
         if (plFreq >= 0 && plFreq <= Double.parseDouble(getToneSquelchValues()[getToneSquelchValues().length - 1])) {
             final String toneSquelchHexCode = Utility.integerToHex(getToneSquelchOrdinal(plFreq));
             if (allowQueueing) {
@@ -400,8 +400,8 @@ public class Icom_PCR2500 extends AbstractRadioReceiver implements TeletypeInter
 
     private void setFrequencyModeFilter(double frequency, StandardModeName mode, int filter) {
         if ((frequency >= MINIMUM_RX_FREQ) && (frequency <= MAXIMUM_RX_FREQ)) {
-            int m = getModeOrdinal(mode);
-            int f = getFilterHzOrdinal(filter);
+            final int m = getModeOrdinal(mode);
+            final int f = getFilterHzOrdinal(filter);
             if (m != -1 && f != -1) {
                 sendFrequencyToPcr(frequency, m, f);
             }
@@ -465,38 +465,38 @@ public class Icom_PCR2500 extends AbstractRadioReceiver implements TeletypeInter
             }
 
             case pcrReplyHeaderSignalOffset -> {
-                String signalOffset = data.substring(2, 4);
+            	final String signalOffset = data.substring(2, 4);
                 getReceiverEvent().firePropertyChange(ReceiverEvent.SIGNAL_OFFSET, null, signalOffset);
             }
 
             case pcrReplyHeaderDTMFDecode -> {
-                String dtmfDecode = data.substring(2, 4);
+            	final String dtmfDecode = data.substring(2, 4);
                 getReceiverEvent().firePropertyChange(ReceiverEvent.DTMF_DECODE, null, dtmfDecode);
             }
 
             case pcrReplyHeaderWaveFormData -> {
-                String waveFormData = data.substring(2, 4);
+            	final String waveFormData = data.substring(2, 4);
                 getReceiverEvent().firePropertyChange(ReceiverEvent.WAVEFORM_DATA, null, waveFormData);
             }
 
             case pcrReplyHeaderScanStatus -> {
-                String scanStatus = data.substring(2, 4);
+            	final String scanStatus = data.substring(2, 4);
                 getReceiverEvent().firePropertyChange(AbstractScanner.SCAN_STATUS, null, scanStatus);
             }
 
             case pcrReplyHeaderFirmware -> {
-                String firmware = data.substring(2, 4);
+            	final String firmware = data.substring(2, 4);
                 getReceiverEvent().firePropertyChange(ReceiverEvent.FIRMWARE, null, firmware);
             }
 
             case pcrReplyHeaderCountry -> {
-                String country = data.substring(2, 4);
+            	final String country = data.substring(2, 4);
                 getReceiverEvent().firePropertyChange(ReceiverEvent.COUNTRY, null, country);
             }
 
             case pcrReplyHeaderPower -> {
                 synchronized (onLineHold) {
-                    boolean power = decodePowerStatus(data.substring(2, 4));
+                	final boolean power = decodePowerStatus(data.substring(2, 4));
                     getReceiverEvent().firePropertyChange(ReceiverEvent.POWER_STATE_CHANGE, null, power);
                     if (power) {
                         isConnected = true;
@@ -506,7 +506,7 @@ public class Icom_PCR2500 extends AbstractRadioReceiver implements TeletypeInter
             }
 
             case pcrReplyHeaderProtocol -> {
-                String protocol = data.substring(2, 4);
+            	final String protocol = data.substring(2, 4);
                 getReceiverEvent().firePropertyChange(ReceiverEvent.PROTOCOL, null, protocol);
             }
 
@@ -738,7 +738,7 @@ public class Icom_PCR2500 extends AbstractRadioReceiver implements TeletypeInter
         }
         try {
             itemsToWrite.put(data);
-        } catch (final InterruptedException ex) {
+        } catch (final InterruptedException _) {
             Thread.currentThread().interrupt();
         }
     }
@@ -788,9 +788,8 @@ public class Icom_PCR2500 extends AbstractRadioReceiver implements TeletypeInter
         executor.execute(new InitiateRadioStop());
     }
 
-    @Override
-    public void processData(final String data) {
-        StringBuilder sb = new StringBuilder();
+    private void processData(final String data) {
+    	final StringBuilder sb = new StringBuilder();
         
         sb.append("ItemsToWrite Remaining: ");
         sb.append(itemsToWrite.size());

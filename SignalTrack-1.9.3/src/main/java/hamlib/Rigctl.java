@@ -569,8 +569,7 @@ public class Rigctl extends AbstractRadioReceiver implements TeletypeInterface {
         setTerminate(true);
     }
 
-    @Override
-    public void processData(String data) {
+    private void processData(String data) {
         try {
             if (data == null) {
                 return;

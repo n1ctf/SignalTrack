@@ -1,0 +1,21 @@
+package com.g0kla.rtlsdr4java;
+
+import java.util.Arrays;
+
+public class ComplexBuffer extends Buffer {
+	/**
+	 * Wrapper around float array containing interleaved I/Q samples
+	 */
+	public ComplexBuffer(float[] samples) {
+		super(samples);
+	}
+
+	/**
+	 * Creates a deep copy of the buffer
+	 */
+	public ComplexBuffer copyOf() {
+		final float[] copy = Arrays.copyOf(mSamples, mSamples.length);
+
+		return new ComplexBuffer(copy);
+	}
+}

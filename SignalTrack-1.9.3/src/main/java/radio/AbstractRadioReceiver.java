@@ -31,6 +31,7 @@ import javax.swing.JPanel;
 
 import hamlib.RigCodes;
 import hamlib.Rigctl;
+
 import signaltrack.SignalTrack;
 
 // An abstract class that stores all current radio settings and handles all common functions 
@@ -51,6 +52,7 @@ public abstract class AbstractRadioReceiver implements ReceiverInterface, AutoCl
 	}
 	
 	public enum StandardModeName {
+		IQ,
         WFM, 
         FM, 
         NFM, 
@@ -167,7 +169,8 @@ public abstract class AbstractRadioReceiver implements ReceiverInterface, AutoCl
 	protected static final String[] RADIO_CATALOG = { 
 		"radio.Icom_PCR1000", 
 		"radio.Icom_PCR2500",
-		"radio.Yaesu_FT857D" 
+		"radio.Yaesu_FT857D",
+		"radio.RafaelMicro_R820T"
 	};
 	
 	private static final long DEFAULT_TIMEOUT_PERIOD = 500;
@@ -246,7 +249,9 @@ public abstract class AbstractRadioReceiver implements ReceiverInterface, AutoCl
 
 	protected AbstractRadioReceiver(File calFile, Boolean clearAllPreferences) {
 		
-		if (Boolean.TRUE.equals(clearAllPreferences)) clearAllPreferences();
+		if (Boolean.TRUE.equals(clearAllPreferences)) {
+			clearAllPreferences();
+		}
 		
 		configureLogger();
 		this.calFile = calFile;
@@ -260,8 +265,6 @@ public abstract class AbstractRadioReceiver implements ReceiverInterface, AutoCl
 	public abstract JPanel[] getConfigurationComponentArray();
 	
 	public abstract long getVersionUID();
-
-	public abstract void processData(String data);
 
 	public abstract void stopRadio();
 
@@ -280,7 +283,7 @@ public abstract class AbstractRadioReceiver implements ReceiverInterface, AutoCl
 	}
 
     public static String createNewDefaultCalFileRecord() {
-    	AbstractRadioReceiver defaultRadio = AbstractRadioReceiver.getRadioInstance(getRadioCatalog()[0]);
+    	final AbstractRadioReceiver defaultRadio = AbstractRadioReceiver.getRadioInstance(getRadioCatalog()[0]);
     	String newFileName = null;
     	if (defaultRadio != null) {
     		newFileName = createNewCalFileRecord(defaultRadio.getManufacturer(), defaultRadio.getModel(), defaultRadio.getDefaultSerialNumber());
@@ -289,9 +292,9 @@ public abstract class AbstractRadioReceiver implements ReceiverInterface, AutoCl
     }
 	
     public static String createNewCalFileRecord(String manufacturer, String model, String serialNumber) {
-    	File file = CalibrationDataObject.getStandardCalibrationFileName(getCalParentFile(), model, serialNumber);
+    	final File file = CalibrationDataObject.getStandardCalibrationFileName(getCalParentFile(), model, serialNumber);
         
-        DefaultRadioSpecification drs = AbstractRadioReceiver.getDefaultRadioSpecification(manufacturer, model);
+    	final DefaultRadioSpecification drs = AbstractRadioReceiver.getDefaultRadioSpecification(manufacturer, model);
         
         if (drs != null) { 
 	    	try (CalibrationDataObject calibrationDataObject = new CalibrationDataObject(file, drs.getSource().name(), manufacturer,
@@ -304,11 +307,11 @@ public abstract class AbstractRadioReceiver implements ReceiverInterface, AutoCl
  
     public String[] getAllDevicesWithCalFiles() {
         final File[] calFiles = getCalParentFile().listFiles();
-        List<String> devices = Collections.synchronizedList(new CopyOnWriteArrayList<>());
+        final List<String> devices = Collections.synchronizedList(new CopyOnWriteArrayList<>());
         if (calFiles != null) {
             for (final File file : calFiles) {
-                String model = CalibrationDataObject.getDataString(file, DataString.MODEL).toUpperCase(Locale.US);
-                String manufacturer = CalibrationDataObject.getDataString(file, DataString.MANUFACTURER).toUpperCase(Locale.US);
+            	final String model = CalibrationDataObject.getDataString(file, DataString.MODEL).toUpperCase(Locale.US);
+            	final String manufacturer = CalibrationDataObject.getDataString(file, DataString.MANUFACTURER).toUpperCase(Locale.US);
                 boolean contains = false;
                 for (String s : devices) {
                     if (s.toUpperCase(Locale.US).contains(model) && s.toUpperCase(Locale.US).contains(manufacturer)) {
@@ -334,8 +337,8 @@ public abstract class AbstractRadioReceiver implements ReceiverInterface, AutoCl
 
 	private void configureLogger() {
 		try {
-			Handler fh = new FileHandler("%t/AbstractRadioReceiver.log");
-			Handler ch = new ConsoleHandler();
+			final Handler fh = new FileHandler("%t/AbstractRadioReceiver.log");
+			final Handler ch = new ConsoleHandler();
 			LOG.addHandler(fh);
 			LOG.setLevel(Level.FINEST);
 			LOG.addHandler(ch);
@@ -383,7 +386,7 @@ public abstract class AbstractRadioReceiver implements ReceiverInterface, AutoCl
 			scanList.get(i).setAGC(userPrefs.getBoolean(deviceID + "scanAGC_F" + i, false));
 			scanList.get(i).setAFC(userPrefs.getBoolean(deviceID + "scanAFC_F" + i, false));
 			scanList.get(i).setAttenuator(userPrefs.getDouble(deviceID + "scanAttenuator_F" + i, 0D));
-			StandardModeName smn = StandardModeName.values()[(userPrefs.getInt(deviceID + "scanEmission_F" + i, StandardModeName.NFM.ordinal()))];
+			final StandardModeName smn = StandardModeName.values()[(userPrefs.getInt(deviceID + "scanEmission_F" + i, StandardModeName.NFM.ordinal()))];
 			scanList.get(i).setModeName(smn);
 			scanList.get(i).setSquelchMode(AccessMode.values()[userPrefs.getInt(deviceID + "scanSquelchType_F" + i, AccessMode.PL.ordinal())]);
 		}
@@ -437,9 +440,11 @@ public abstract class AbstractRadioReceiver implements ReceiverInterface, AutoCl
 	}
     
 	public static List<String> getAccessModeStringList(StandardModeName smn) {
-        List<String> list = new ArrayList<>();
+        final List<String> list = new ArrayList<>();
         try {
 	        switch (smn) {
+	        	case IQ -> 
+	        		list.add(AccessMode.CSQ.name());
 	            case WFM ->
 	                list.add(AccessMode.CSQ.name());
 	            case FM -> {
@@ -573,30 +578,37 @@ public abstract class AbstractRadioReceiver implements ReceiverInterface, AutoCl
 		}
 	}
 
+	@Override
 	public EncryptionProtocol[] getEncryptionProtocols() {
 		return new EncryptionProtocol[] { EncryptionProtocol.CLEAR };
 	}
 	
+	@Override
 	public double getDefaultNoiseFloor() {
 		return DEFAULT_NOISE_FLOOR;
 	}
 
+	@Override
 	public double getDefaultSaturation() {
 		return DEFAULT_SATURATION;
 	}
-
+	
+	@Override
 	public double getAdjacentChannelRejectiondB() {
 		return ADJACENT_CHANNEL_REJECTION_DB;
 	}
 
+	@Override
 	public double getSignalReqFor12dBSINADdBm() {
 		return SIGNAL_REQ_FOR_12DB_SINAD;
 	}
 
+	@Override
 	public double getSignalReqFor20dBQuietingdBm() {
 		return SIGNAL_REQ_FOR_20DB_QUIETING;
 	}
 
+	@Override
 	public double getSignalReqFor5PctBERdBm() {
 		return SIGNAL_REQ_FOR_5PCT_BER;
 	}
@@ -751,7 +763,7 @@ public abstract class AbstractRadioReceiver implements ReceiverInterface, AutoCl
 	}
 
 	public final List<Double> getdBmPercentList() {
-		List<Double> list = new ArrayList<>();
+		final List<Double> list = new ArrayList<>();
 		for (int i = 0; i < getdBmScanList().size(); i++) {
 			list.add(i, getdBmPercent(i));
 		}
@@ -767,7 +779,7 @@ public abstract class AbstractRadioReceiver implements ReceiverInterface, AutoCl
 	}
 
 	public final List<Double> getSinadPercentList() {
-		List<Double> list = new ArrayList<>();
+		final List<Double> list = new ArrayList<>();
 		for (int i = 0; i < getSinadScanList().size(); i++) {
 			list.add(i, getSinadPercent(i));
 		}
@@ -783,7 +795,7 @@ public abstract class AbstractRadioReceiver implements ReceiverInterface, AutoCl
 	}
 
 	public final List<Double> getBERPercentList() {
-		List<Double> list = new ArrayList<>();
+		final List<Double> list = new ArrayList<>();
 		for (int i = 0; i < getBerScanList().size(); i++) {
 			list.add(i, getBERPercent(i));
 		}
@@ -894,6 +906,7 @@ public abstract class AbstractRadioReceiver implements ReceiverInterface, AutoCl
 		this.rssiEnabled = rssiEnabled;
 	}
 	
+	@Override
 	public boolean checkRxFreq(double freq) {
 		return freq >= getMinRxFreq() && freq <= getMaxRxFreq();
 	}
@@ -921,28 +934,32 @@ public abstract class AbstractRadioReceiver implements ReceiverInterface, AutoCl
 		return transmitterEvent;
 	}
 
+	@Override
 	public String[] getDigitalNACValues() {
-		String[] s = new String[4096];
+		final String[] s = new String[4096];
 		for (int i = 0; i < 4096; i++) {
-			s[i] = String.format("0x%03X", i);
+			s[i] = "0x%03X".formatted(i);
 		}
 		return s;
 	}
 
+	@Override
 	public String[] getToneSquelchValues() {
 		return TONE_SQUELCH_VALUES.clone();
 	}
 
+	@Override
 	public String[] getDigitalSquelchValues() {
 		return DIGITAL_SQUELCH_VALUES.clone();
 	}
 	
+	@Override
 	public String[] getDigitalColorCodeValues() {
 		return DIGITAL_COLOR_CODE_VALUES.clone();
 	}
 	
 	public static DefaultRadioSpecification getDefaultRadioSpecification(String manufacturer, String model) {
-		AbstractRadioReceiver radioInstance = getRadioInstanceFor(manufacturer, model);
+		final AbstractRadioReceiver radioInstance = getRadioInstanceFor(manufacturer, model);
 		if (radioInstance != null) {
 			return new DefaultRadioSpecification(ProviderCatalog.SIGNALTRACK, radioInstance.getRssiLowerLimit(),
 				radioInstance.getRssiUpperLimit(), radioInstance.getDefaultNoiseFloor(), 
@@ -958,7 +975,7 @@ public abstract class AbstractRadioReceiver implements ReceiverInterface, AutoCl
 		String rigCode = null;
 		try {
 			for (String radioCatalogElement : RADIO_CATALOG) {
-				AbstractRadioReceiver radioInstance = AbstractRadioReceiver.getRadioInstance(radioCatalogElement);
+				final AbstractRadioReceiver radioInstance = AbstractRadioReceiver.getRadioInstance(radioCatalogElement);
 				if (radioInstance != null
 						&& radioInstance.getManufacturer().toUpperCase(Locale.getDefault())
 								.contains(manufacturer.toUpperCase(Locale.getDefault()))
@@ -977,7 +994,7 @@ public abstract class AbstractRadioReceiver implements ReceiverInterface, AutoCl
 		AbstractRadioReceiver radioInstance = null;
 		try {
 			for (String radioCatalogElement : AbstractRadioReceiver.RADIO_CATALOG) {
-				AbstractRadioReceiver abstractRadioReceiver = getRadioInstance(radioCatalogElement);
+				final AbstractRadioReceiver abstractRadioReceiver = getRadioInstance(radioCatalogElement);
 				if (abstractRadioReceiver != null
 						&& abstractRadioReceiver.getManufacturer().toUpperCase(Locale.getDefault())
 								.contains(manufacturer.toUpperCase(Locale.getDefault()))
@@ -993,9 +1010,9 @@ public abstract class AbstractRadioReceiver implements ReceiverInterface, AutoCl
 	}
 
 	public static AbstractRadioReceiver getRadioInstance(File calFile, Boolean clearAllPreferences) {
-		String source;
-		String manufacturer;
-		String model;
+		final String source;
+		final String manufacturer;
+		final String model;
 		AbstractRadioReceiver radioInstance = null;
 
 		if (calFile == null || "null".equalsIgnoreCase(calFile.getName()) || !calFile.exists()) {
@@ -1011,7 +1028,7 @@ public abstract class AbstractRadioReceiver implements ReceiverInterface, AutoCl
 				// If the calFile source entry is SIGNALTRACK, then we iterate through and find
 				// a matching module in the catalog.
 				for (String catalogEntry : AbstractRadioReceiver.getRadioCatalog()) {
-					AbstractRadioReceiver abstractRadioReceiver = getRadioInstance(catalogEntry, calFile, clearAllPreferences);
+					final AbstractRadioReceiver abstractRadioReceiver = getRadioInstance(catalogEntry, calFile, clearAllPreferences);
 					if (abstractRadioReceiver != null && manufacturer != null
 							&& abstractRadioReceiver.getManufacturer().toUpperCase(Locale.getDefault())
 									.contains(manufacturer.toUpperCase(Locale.getDefault()))
@@ -1025,13 +1042,13 @@ public abstract class AbstractRadioReceiver implements ReceiverInterface, AutoCl
 				// something that will work in
 				// the Hamlib library and use it instead.
 				if (radioInstance == null) {
-					int rigCode = RigCodes.getRigCode(manufacturer, model);
+					final int rigCode = RigCodes.getRigCode(manufacturer, model);
 					radioInstance = new Rigctl(rigCode, calFile, true);
 				}
 				
 			} else if (source.toUpperCase(Locale.getDefault()).contains(ProviderCatalog.HAMLIB.name())) {
-				String[] sourceString = source.split(" ");
-				int rigCode;
+				final String[] sourceString = source.split(" ");
+				final int rigCode;
 				if (sourceString.length > 1) {
 					rigCode = Integer.parseInt(sourceString[1]);
 				} else {
@@ -1048,7 +1065,7 @@ public abstract class AbstractRadioReceiver implements ReceiverInterface, AutoCl
 	}
 
 	public static AbstractRadioReceiver getRadioInstance(String className) {
-		Class<?> classTemp;
+		final Class<?> classTemp;
 		AbstractRadioReceiver radioInstance = null;
 		try {
 			AbstractRadioReceiver.className = className;
@@ -1073,12 +1090,12 @@ public abstract class AbstractRadioReceiver implements ReceiverInterface, AutoCl
 	}
 
 	public static AbstractRadioReceiver getRadioInstance(String className, File calFile, Boolean clearAllPreferences) {
-		Class<?> classTemp;
+		final Class<?> classTemp;
 		AbstractRadioReceiver radioInstance = null;
 		try {
 			AbstractRadioReceiver.className = className;
 			classTemp = Class.forName(className);
-			Class<?>[] cArg = new Class<?>[2];
+			final Class<?>[] cArg = new Class<?>[2];
 			cArg[0] = File.class;
 			cArg[1] = Boolean.class;
 			radioInstance = (AbstractRadioReceiver) classTemp.getDeclaredConstructor(cArg).newInstance(calFile, clearAllPreferences);
@@ -1191,7 +1208,7 @@ public abstract class AbstractRadioReceiver implements ReceiverInterface, AutoCl
 	}
 	
 	public void setScanList(List<ScanElement> scanList) {
-		boolean isScanningNow = isScanning;
+		final boolean isScanningNow = isScanning;
 		stopScanNow();
 		this.scanList = Collections.unmodifiableList(scanList);
 		scanEvent.firePropertyChange(ScanEvent.SCAN_LIST_MODIFIED, null, scanList);
@@ -1249,7 +1266,7 @@ public abstract class AbstractRadioReceiver implements ReceiverInterface, AutoCl
 	}
 
 	public static List<String> getProviderCatalog() {
-		List<String> list = new ArrayList<>(2);
+		final List<String> list = new ArrayList<>(2);
 		list.add(ProviderCatalog.SIGNALTRACK.name());
 		list.add(ProviderCatalog.HAMLIB.name());
 		return list;
@@ -1261,8 +1278,8 @@ public abstract class AbstractRadioReceiver implements ReceiverInterface, AutoCl
 		}
 		this.scanList = Collections.unmodifiableList(scanList);
 		int numberOfSelectedChannels = 0;
-		for (int i = 0; i < scanList.size(); i++) {
-			if (scanList.get(i).isScanSelected()) {
+		for (ScanElement aScanList : scanList) {
+			if (aScanList.isScanSelected()) {
 				numberOfSelectedChannels++;
 			}
 		}
@@ -1347,6 +1364,7 @@ public abstract class AbstractRadioReceiver implements ReceiverInterface, AutoCl
 
 	@Override
 	public void close() {
+		stopRadio();
 		for (Handler handler : LOG.getHandlers()) {
 			LOG.removeHandler(handler);
 	        handler.close();
@@ -1354,15 +1372,15 @@ public abstract class AbstractRadioReceiver implements ReceiverInterface, AutoCl
 	}
 	
 	public static class DefaultRadioSpecification {
-		private ProviderCatalog source;
-		private int rssiLowerLimit;
-		private int rssiUpperLimit;
-		private double noiseFloor;
-		private double saturation;
-		private double adjacentChannelRejection;
-		private double signalRequiredFor12dBSinad;
-		private double signalRequiredFor20dBQuieting;
-		private double signalRequiredFor5PercentBER;
+		private final ProviderCatalog source;
+		private final int rssiLowerLimit;
+		private final int rssiUpperLimit;
+		private final double noiseFloor;
+		private final double saturation;
+		private final double adjacentChannelRejection;
+		private final double signalRequiredFor12dBSinad;
+		private final double signalRequiredFor20dBQuieting;
+		private final double signalRequiredFor5PercentBER;
 		
 		public DefaultRadioSpecification(ProviderCatalog source, int rssiLowerLimit, int rssiUpperLimit, double noiseFloor,
 				double saturation, double adjacentChannelRejection, double signalRequiredFor12dBSinad,

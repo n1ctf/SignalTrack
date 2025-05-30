@@ -707,8 +707,7 @@ public class Icom_PCR1000 extends AbstractRadioReceiver implements TeletypeInter
 		executor.execute(new InitiateRadioStop());
 	}
 
-	@Override
-	public void processData(final String data) {
+	private void processData(String data) {
 		String str = String.format("last command: %s reply: %s", lastCommandSent, data);
 		LOG.log(Level.INFO, str);
 

@@ -116,7 +116,7 @@ public class WeatherKiosk implements AutoCloseable {
 				close();
 			}
 		});
-				
+		
 		initializeCLI(args);
 
 		getSettings();

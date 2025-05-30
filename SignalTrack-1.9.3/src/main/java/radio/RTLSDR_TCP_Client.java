@@ -394,12 +394,6 @@ public class RTLSDR_TCP_Client extends AbstractRadioReceiver implements AutoClos
 	}
 
 	@Override
-	public void processData(String data) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
 	public String getInterfaceName() {
 		// TODO Auto-generated method stub
 		return null;

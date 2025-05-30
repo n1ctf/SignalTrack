@@ -626,45 +626,32 @@ public class Yaesu_FT857D extends AbstractRadioReceiver implements TeletypeInter
 	}
 
 	private StandardModeName translateMode(int modeName) {
-		switch (modeName) {
-			case ft857dCommandOperatingMode_FM:
-				return StandardModeName.FM;
-			case ft857dCommandOperatingMode_WFM:
-				return StandardModeName.WFM;
-			case ft857dCommandOperatingMode_AM:
-				return StandardModeName.AM;
-			case ft857dCommandOperatingMode_USB:
-				return StandardModeName.USB;
-			case ft857dCommandOperatingMode_LSB:
-				return StandardModeName.LSB;
-			case ft857dCommandOperatingMode_CW:
-				return StandardModeName.CW;
-			case ft857dCommandOperatingMode_CWR:
-				return StandardModeName.CWR;
-			case ft857dCommandOperatingMode_FMN:
-				return StandardModeName.NFM;
-			case ft857dCommandOperatingMode_RTTY:
-				return StandardModeName.RTTY;
-			case ft857dCommandOperatingMode_PKT:
-				return StandardModeName.PKTUSB;
-			case ft857dCommandOperatingMode_CWN:
-				return StandardModeName.CW;
-			default:
-				return null;
-		}
+		return switch (modeName) {
+			case ft857dCommandOperatingMode_FM -> StandardModeName.FM;
+			case ft857dCommandOperatingMode_WFM -> StandardModeName.WFM;
+			case ft857dCommandOperatingMode_AM -> StandardModeName.AM;
+			case ft857dCommandOperatingMode_USB -> StandardModeName.USB;
+			case ft857dCommandOperatingMode_LSB -> StandardModeName.LSB;
+			case ft857dCommandOperatingMode_CW -> StandardModeName.CW;
+			case ft857dCommandOperatingMode_CWR -> StandardModeName.CWR;
+			case ft857dCommandOperatingMode_FMN -> StandardModeName.NFM;
+			case ft857dCommandOperatingMode_RTTY -> StandardModeName.RTTY;
+			case ft857dCommandOperatingMode_PKT -> StandardModeName.PKTUSB;
+			case ft857dCommandOperatingMode_CWN -> StandardModeName.CW;
+			default -> null;
+		};
 	}
 
-	@Override
-	public void processData(String data) {
+	private void processData(String data) {
 		connected = true;
 		heartbeatTimer.restart();
 		if (data.length() == 12) {
-			int[] ia = { 
-					Integer.parseInt(data.substring(0, 2)), 
-					Integer.parseInt(data.substring(2, 4)),
-					Integer.parseInt(data.substring(4, 6)), 
-					Integer.parseInt(data.substring(6, 8)),
-					Integer.parseInt(data.substring(8, 10)) };
+			final int[] ia = { 
+				Integer.parseInt(data.substring(0, 2)), 
+				Integer.parseInt(data.substring(2, 4)),
+				Integer.parseInt(data.substring(4, 6)), 
+				Integer.parseInt(data.substring(6, 8)),
+				Integer.parseInt(data.substring(8, 10)) };
 			decode(ia);
 		}
 	}

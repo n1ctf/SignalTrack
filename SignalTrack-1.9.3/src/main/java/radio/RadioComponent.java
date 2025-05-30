@@ -527,6 +527,17 @@ public class RadioComponent extends JDialog {
 
     private void updateModeComboBox() {
         switch (((String) jcboMode.getSelectedItem()).trim()) {
+	        case "IQ" -> {
+	            jcboSquelchMode.removeAllItems();
+	            jcbNB.setEnabled(false);
+	            jcbAGC.setEnabled(false);
+	            jcbAFC.setEnabled(false);
+	            jcbSampleRSSI.setEnabled(true);
+	            jcbSampleBER.setEnabled(false);
+	            jcbSampleBER.setSelected(false);
+	            jcbSampleSINAD.setEnabled(false);
+	            jcboSquelchMode.setSelectedIndex(0);
+	        }
 	        case "LSB" -> {
 	            jcboSquelchMode.removeAllItems();
 	            jcboSquelchMode.addItem("CSQ");

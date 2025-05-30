@@ -32,7 +32,6 @@ public class NASASpaceWeatherProcessor implements AutoCloseable {
 	
 	private static final String CRLF = "\r\n";
 	private static final Preferences userPrefs = Preferences.userRoot().node(NASASpaceWeatherProcessor.class.getName());
-	private static final int TERMINATE_TIMEOUT = 3;  // seconds
     private static final Logger LOG = Logger.getLogger(NASASpaceWeatherProcessor.class.getName());
     
     private final PropertyChangeSupport pcs = new PropertyChangeSupport(this);
@@ -41,7 +40,7 @@ public class NASASpaceWeatherProcessor implements AutoCloseable {
 	private final NASASpaceWeatherGUI nasaSpaceWeatherGUI;
 	private final RSGPanel rsgPanel;
 	
-	private final ScheduledExecutorService startScheduler = Executors.newScheduledThreadPool(1);
+	private final ScheduledExecutorService startScheduler = Executors.newScheduledThreadPool(0);
 	
 	private int startMonitorIndex;
 	private Style style;
@@ -129,23 +128,12 @@ public class NASASpaceWeatherProcessor implements AutoCloseable {
 	private class StartMonitors implements Runnable {
 		@Override
 		public void run() {
-			if (nasaMonitor.get(startMonitorIndex).isEnabled()) {
+			if (nasaMonitor.get(startMonitorIndex).isEnabled() && startMonitorIndex < nasaMonitor.size()) {
 				nasaMonitor.get(startMonitorIndex).start();
 			}
 			startMonitorIndex++;
 			if (startMonitorIndex >= nasaMonitor.size()) {
-				if (startScheduler != null) {
-					try {
-						LOG.log(Level.INFO, "Initializing NASASpaceWeatherProcessor.startScheduler service termination....");
-						startScheduler.shutdown();
-						startScheduler.awaitTermination(2, TimeUnit.SECONDS);
-						LOG.log(Level.INFO, "NASASpaceWeatherProcessor.startScheduler service has gracefully terminated");
-					} catch (InterruptedException _) {
-						startScheduler.shutdownNow();
-						LOG.log(Level.SEVERE, "NASASpaceWeatherProcessor.startScheduler service has timed out after 2 seconds of waiting to terminate processes.");
-						Thread.currentThread().interrupt();
-					}
-				}
+				startScheduler.close();
 			}
 		}
 	}
@@ -175,21 +163,23 @@ public class NASASpaceWeatherProcessor implements AutoCloseable {
 			}
 			if (event.getPropertyName().equals(NasaSolarFlareMonitor.Event.BEGIN_TIME.name())) {
 				pcs.firePropertyChange(EVENT_NARRATIVE, null, 
-						"Solar Flare HAS Occured at: " + ((ZonedDateTime) event.getNewValue()).format(DateTimeFormatter.ISO_INSTANT) + CRLF);
+						"Solar Flare has occured at: " + ((ZonedDateTime) event.getNewValue()).format(DateTimeFormatter.ISO_INSTANT) + CRLF);
 			}
 			if (event.getPropertyName().equals(NasaSolarFlareMonitor.Event.PEAK_TIME.name())) {
 				pcs.firePropertyChange(EVENT_NARRATIVE, null, 
-						"Solar Flare will PEAK at: " + ((ZonedDateTime) event.getNewValue()).format(DateTimeFormatter.ISO_INSTANT) + CRLF);
+						"Solar Flare will peak at: " + ((ZonedDateTime) event.getNewValue()).format(DateTimeFormatter.ISO_INSTANT) + CRLF);
 			}
 			if (event.getPropertyName().equals(NasaSolarFlareMonitor.Event.END_TIME.name())) {
 				pcs.firePropertyChange(EVENT_NARRATIVE, null, 
-						"Solar Flare will END at: " + ((ZonedDateTime) event.getNewValue()).format(DateTimeFormatter.ISO_INSTANT) + CRLF);
+						"Solar Flare will end at: " + ((ZonedDateTime) event.getNewValue()).format(DateTimeFormatter.ISO_INSTANT) + CRLF);
 			}
 			if (event.getPropertyName().equals(NasaSolarFlareMonitor.Event.NO_EVENTS.name())) {
 				pcs.firePropertyChange(EVENT_NARRATIVE, null, (String) event.getNewValue() + CRLF);
 			}
 			if (event.getPropertyName().equals(NasaSolarFlareMonitor.Event.NETWORK_ERROR.name())) {
-				pcs.firePropertyChange(EVENT_NARRATIVE, null, (String) event.getNewValue() + CRLF);
+				pcs.firePropertyChange(EVENT_NARRATIVE, null, "The NASA server returned HTTP response code 503 for URL "
+						+ "https://api.nasa.gov/DONKI/FLR" + CRLF);
+				LOG.log(Level.INFO, "The NASA server returned HTTP response code 503 for URL https://api.nasa.gov/DONKI/FLR");
 			}
 			if (event.getPropertyName().equals(NasaSolarFlareMonitor.Event.LINK.name())) {
 				nasaSpaceWeatherGUI.setFlareEventLink((URL) event.getNewValue());
@@ -215,18 +205,18 @@ public class NASASpaceWeatherProcessor implements AutoCloseable {
 			}
 			if (event.getPropertyName().equals(NasaCMEMonitor.Event.IS_EARTH_GB.name())) {
 				pcs.firePropertyChange(EVENT_NARRATIVE, null, 
-						"CME Expect Earth Glanging Blow: " + (((boolean) event.getNewValue()) ? "TRUE" : "FALSE") + CRLF);
+						"CME expect earth glancing blow: " + (((boolean) event.getNewValue()) ? "TRUE" : "FALSE") + CRLF);
 			}
 			if (event.getPropertyName().equals(NasaCMEMonitor.Event.TIME21_5.name())) {
 				pcs.firePropertyChange(EVENT_NARRATIVE, null, 
-						"Coronal Mass Ejection HAS Occured at: " + ((ZonedDateTime) event.getNewValue()).format(DateTimeFormatter.ISO_INSTANT) + CRLF);
+						"Coronal Mass Ejection has occured at: " + ((ZonedDateTime) event.getNewValue()).format(DateTimeFormatter.ISO_INSTANT) + CRLF);
 			}
 			if (event.getPropertyName().equals(NasaCMEMonitor.Event.ESTIMATED_SHOCK_ARRIVAL_TIME.name())) {
-				pcs.firePropertyChange(EVENT_NARRATIVE, null, "CME Estimated Arrival Time: "
+				pcs.firePropertyChange(EVENT_NARRATIVE, null, "CME estimated arrival time: "
 						+ ((ZonedDateTime) event.getNewValue()).format(DateTimeFormatter.ISO_INSTANT) + CRLF);
 			}
 			if (event.getPropertyName().equals(NasaCMEMonitor.Event.ESTIMATED_DURATION.name())) {
-				pcs.firePropertyChange(EVENT_NARRATIVE, null, "CME Duration: " + (double) event.getNewValue() + CRLF);
+				pcs.firePropertyChange(EVENT_NARRATIVE, null, "CME duration: " + (double) event.getNewValue() + CRLF);
 			}
 			if (event.getPropertyName().equals(NasaCMEMonitor.Event.DATA_FETCH_COMPLETE.name())) {
 				nasaSpaceWeatherGUI.getFlag(1).setForeground(nasaMonitor.get(1).getFlagTextColor());
@@ -242,7 +232,9 @@ public class NASASpaceWeatherProcessor implements AutoCloseable {
 				pcs.firePropertyChange(EVENT_NARRATIVE, null, (String) event.getNewValue() + CRLF);
 			}
 			if (event.getPropertyName().equals(NasaCMEMonitor.Event.NETWORK_ERROR.name())) {
-				pcs.firePropertyChange(EVENT_NARRATIVE, null, (String) event.getNewValue() + CRLF);
+				pcs.firePropertyChange(EVENT_NARRATIVE, null, "The NASA server returned HTTP response code 503 for URL "
+						+ "https://api.nasa.gov/DONKI/CME" + CRLF);
+				LOG.log(Level.INFO, "The NASA server returned HTTP response code 503 for URL https://api.nasa.gov/DONKI/CME");
 			}
 			if (event.getPropertyName().equals(AbstractNasaMonitor.Events.MINUTES_ELAPSED.name())) {
 				if (style != Style.SINGLE_COLUMN_NO_TIMEOUT_DISPLAY) {
@@ -258,7 +250,7 @@ public class NASASpaceWeatherProcessor implements AutoCloseable {
 				pcs.firePropertyChange(EVENT_NARRATIVE, null, (String) event.getNewValue() + CRLF);
 			}
 			if (event.getPropertyName().equals(NasaGeomagneticStormMonitor.Event.START_TIME.name())) {
-				pcs.firePropertyChange(EVENT_NARRATIVE, null, "GST Start Time: "
+				pcs.firePropertyChange(EVENT_NARRATIVE, null, "GST start sime: "
 						+ ((ZonedDateTime) event.getNewValue()).format(DateTimeFormatter.ISO_INSTANT) + CRLF);
 			}
 			if (event.getPropertyName().equals(NasaGeomagneticStormMonitor.Event.LINK.name())) {
@@ -266,7 +258,7 @@ public class NASASpaceWeatherProcessor implements AutoCloseable {
 				nasaSpaceWeatherGUI.setGSTEventLink((URL) event.getNewValue());
 			}
 			if (event.getPropertyName().equals(NasaGeomagneticStormMonitor.Event.OBSERVED_TIME.name())) {
-				pcs.firePropertyChange(EVENT_NARRATIVE, null, "GST Observed Time: "
+				pcs.firePropertyChange(EVENT_NARRATIVE, null, "GST observed time: "
 						+ ((ZonedDateTime) event.getNewValue()).format(DateTimeFormatter.ISO_INSTANT) + CRLF);
 			}
 			if (event.getPropertyName().equals(NasaGeomagneticStormMonitor.Event.KP_INDEX.name())) {
@@ -280,7 +272,9 @@ public class NASASpaceWeatherProcessor implements AutoCloseable {
 				pcs.firePropertyChange(EVENT_NARRATIVE, null, (String) event.getNewValue() + CRLF);
 			}
 			if (event.getPropertyName().equals(NasaGeomagneticStormMonitor.Event.NETWORK_ERROR.name())) {
-				pcs.firePropertyChange(EVENT_NARRATIVE, null, (String) event.getNewValue() + CRLF);
+				pcs.firePropertyChange(EVENT_NARRATIVE, null, "The NASA server returned HTTP response code 503 for URL "
+						+ "https://api.nasa.gov/DONKI/GST" + CRLF);
+				LOG.log(Level.INFO, "The NASA server returned HTTP response code 503 for URL https://api.nasa.gov/DONKI/GST");
 			}
 			if (event.getPropertyName().equals(NasaGeomagneticStormMonitor.Event.DATA_FETCH_COMPLETE.name())) {
 				nasaSpaceWeatherGUI.getFlag(2).setForeground(nasaMonitor.get(2).getFlagTextColor());
@@ -302,7 +296,7 @@ public class NASASpaceWeatherProcessor implements AutoCloseable {
 				pcs.firePropertyChange(EVENT_NARRATIVE, null, (String) event.getNewValue() + CRLF);
 			}
 			if (event.getPropertyName().equals(NasaSolarEnergeticParticleMonitor.Event.EVENT_TIME.name())) {
-				pcs.firePropertyChange(EVENT_NARRATIVE, null, "SEP Emmitted on : "
+				pcs.firePropertyChange(EVENT_NARRATIVE, null, "SEP emmitted on : "
 						+ ((ZonedDateTime) event.getNewValue()).format(DateTimeFormatter.ISO_INSTANT) + CRLF);
 			}
 			if (event.getPropertyName().equals(NasaSolarEnergeticParticleMonitor.Event.LINK.name())) {
@@ -313,8 +307,9 @@ public class NASASpaceWeatherProcessor implements AutoCloseable {
 				pcs.firePropertyChange(EVENT_NARRATIVE, null, (String) event.getNewValue() + CRLF);
 			}
 			if (event.getPropertyName().equals(NasaSolarEnergeticParticleMonitor.Event.NETWORK_ERROR.name())) {
-				pcs.firePropertyChange(EVENT_NARRATIVE, null, "The NASA Server returned HTTP response code 503 for URL "
+				pcs.firePropertyChange(EVENT_NARRATIVE, null, "The NASA server returned HTTP response code 503 for URL "
 						+ "https://api.nasa.gov/DONKI/SEP" + CRLF);
+				LOG.log(Level.INFO, "The NASA server returned HTTP response code 503 for URL https://api.nasa.gov/DONKI/SEP");
 			}
 			if (event.getPropertyName().equals(NasaSolarEnergeticParticleMonitor.Event.SOLAR_RADIATION_STORM.name())) {
 				rsgPanel.setSolarRadiationStorm((SolarRadiationStormScale) event.getNewValue());
@@ -339,11 +334,11 @@ public class NASASpaceWeatherProcessor implements AutoCloseable {
 				pcs.firePropertyChange(EVENT_NARRATIVE, null, (String) event.getNewValue() + CRLF);
 			}
 			if (event.getPropertyName().equals(NasaInterplanetaryShockMonitor.Event.EVENT_TIME.name())) {
-				pcs.firePropertyChange(EVENT_NARRATIVE, null, "IPS Colision DTG : "
+				pcs.firePropertyChange(EVENT_NARRATIVE, null, "IPS colision DTG : "
 						+ ((ZonedDateTime) event.getNewValue()).format(DateTimeFormatter.ISO_INSTANT) + CRLF);
 			}
 			if (event.getPropertyName().equals(NasaInterplanetaryShockMonitor.Event.LOCATION.name())) {
-				pcs.firePropertyChange(EVENT_NARRATIVE, null, "IPS Colision Location : " + ((String) event.getNewValue()) + CRLF);
+				pcs.firePropertyChange(EVENT_NARRATIVE, null, "IPS colision location : " + ((String) event.getNewValue()) + CRLF);
 			}
 			if (event.getPropertyName().equals(NasaInterplanetaryShockMonitor.Event.LINK.name())) {
 				pcs.firePropertyChange(EVENT_NARRATIVE, null, event.getNewValue() + CRLF);
@@ -353,8 +348,9 @@ public class NASASpaceWeatherProcessor implements AutoCloseable {
 				pcs.firePropertyChange(EVENT_NARRATIVE, null, (String) event.getNewValue() + CRLF);
 			}
 			if (event.getPropertyName().equals(NasaInterplanetaryShockMonitor.Event.NETWORK_ERROR.name())) {
-				pcs.firePropertyChange(EVENT_NARRATIVE, null, "The NASA Server returned HTTP response code 503 for URL "
+				pcs.firePropertyChange(EVENT_NARRATIVE, null, "The NASA server returned HTTP response code 503 for URL "
 						+ "https://api.nasa.gov/DONKI/IPS" + CRLF);
+				LOG.log(Level.INFO, "The NASA server returned HTTP response code 503 for URL https://api.nasa.gov/DONKI/IPS");
 			}
 			if (event.getPropertyName().equals(NasaInterplanetaryShockMonitor.Event.DATA_FETCH_COMPLETE.name())) {
 				nasaSpaceWeatherGUI.getFlag(4).setForeground(nasaMonitor.get(4).getFlagTextColor());
@@ -376,7 +372,7 @@ public class NASASpaceWeatherProcessor implements AutoCloseable {
 				pcs.firePropertyChange(EVENT_NARRATIVE, null, (String) event.getNewValue() + CRLF);
 			}
 			if (event.getPropertyName().equals(NasaRadiationBeltEnhancementMonitor.Event.EVENT_TIME.name())) {
-				pcs.firePropertyChange(EVENT_NARRATIVE, null, "RBE Released on : "
+				pcs.firePropertyChange(EVENT_NARRATIVE, null, "RBE released on : "
 						+ ((ZonedDateTime) event.getNewValue()).format(DateTimeFormatter.ISO_INSTANT) + CRLF);
 			}
 			if (event.getPropertyName().equals(NasaRadiationBeltEnhancementMonitor.Event.NO_EVENTS.name())) {
@@ -387,8 +383,9 @@ public class NASASpaceWeatherProcessor implements AutoCloseable {
 				nasaSpaceWeatherGUI.setRBEEventLink((URL) event.getNewValue());
 			}
 			if (event.getPropertyName().equals(NasaRadiationBeltEnhancementMonitor.Event.NETWORK_ERROR.name())) {
-				pcs.firePropertyChange(EVENT_NARRATIVE, null, "The NASA Server returned HTTP response code 503 for URL "
+				pcs.firePropertyChange(EVENT_NARRATIVE, null, "The NASA server returned HTTP response code 503 for URL "
 						+ "https://api.nasa.gov/DONKI/RBE" + CRLF);
+				LOG.log(Level.INFO, "The NASA server returned HTTP response code 503 for URL https://api.nasa.gov/DONKI/RBE");
 			}
 			if (event.getPropertyName().equals(NasaRadiationBeltEnhancementMonitor.Event.DATA_FETCH_COMPLETE.name())) {
 				nasaSpaceWeatherGUI.getFlag(5).setForeground(nasaMonitor.get(5).getFlagTextColor());
@@ -410,7 +407,7 @@ public class NASASpaceWeatherProcessor implements AutoCloseable {
 				pcs.firePropertyChange(EVENT_NARRATIVE, null, (String) event.getNewValue() + CRLF);
 			}
 			if (event.getPropertyName().equals(NasaHighSpeedStreamMonitor.Event.EVENT_TIME.name())) {
-				pcs.firePropertyChange(EVENT_NARRATIVE, null, "HSS Released on : "
+				pcs.firePropertyChange(EVENT_NARRATIVE, null, "HSS released on : "
 						+ ((ZonedDateTime) event.getNewValue()).format(DateTimeFormatter.ISO_INSTANT) + CRLF);
 			}
 			if (event.getPropertyName().equals(NasaHighSpeedStreamMonitor.Event.NO_EVENTS.name())) {
@@ -421,8 +418,9 @@ public class NASASpaceWeatherProcessor implements AutoCloseable {
 				nasaSpaceWeatherGUI.setHSSEventLink((URL) event.getNewValue());
 			}
 			if (event.getPropertyName().equals(NasaHighSpeedStreamMonitor.Event.NETWORK_ERROR.name())) {
-				pcs.firePropertyChange(EVENT_NARRATIVE, null, "The NASA Server returned HTTP response code 503 for URL "
+				pcs.firePropertyChange(EVENT_NARRATIVE, null, "The NASA server returned HTTP response code 503 for URL "
 						+ "https://api.nasa.gov/DONKI/HSS" + CRLF);
+				LOG.log(Level.INFO, "The NASA server returned HTTP response code 503 for URL https://api.nasa.gov/DONKI/HSS");
 			}
 			if (event.getPropertyName().equals(NasaHighSpeedStreamMonitor.Event.DATA_FETCH_COMPLETE.name())) {
 				nasaSpaceWeatherGUI.getFlag(6).setForeground(nasaMonitor.get(6).getFlagTextColor());
@@ -444,7 +442,7 @@ public class NASASpaceWeatherProcessor implements AutoCloseable {
 				pcs.firePropertyChange(EVENT_NARRATIVE, null, (String) event.getNewValue() + CRLF);
 			}
 			if (event.getPropertyName().equals(NasaMagnetopauseCrossingMonitor.Event.EVENT_TIME.name())) {
-				pcs.firePropertyChange(EVENT_NARRATIVE, null, "MPC Emmitted on : "
+				pcs.firePropertyChange(EVENT_NARRATIVE, null, "MPC emmitted on : "
 						+ ((ZonedDateTime) event.getNewValue()).format(DateTimeFormatter.ISO_INSTANT) + CRLF);
 			}
 			if (event.getPropertyName().equals(NasaMagnetopauseCrossingMonitor.Event.NO_EVENTS.name())) {
@@ -455,7 +453,9 @@ public class NASASpaceWeatherProcessor implements AutoCloseable {
 				nasaSpaceWeatherGUI.setMPCEventLink((URL) event.getNewValue());
 			}
 			if (event.getPropertyName().equals(NasaMagnetopauseCrossingMonitor.Event.NETWORK_ERROR.name())) {
-				pcs.firePropertyChange(EVENT_NARRATIVE, null, (String) event.getNewValue() + CRLF);
+				pcs.firePropertyChange(EVENT_NARRATIVE, null, "The NASA server returned HTTP response code 503 for URL "
+						+ "https://api.nasa.gov/DONKI/MPC" + CRLF);
+				LOG.log(Level.INFO, "The NASA server returned HTTP response code 503 for URL https://api.nasa.gov/DONKI/MPC");
 			}
 			if (event.getPropertyName().equals(NasaMagnetopauseCrossingMonitor.Event.DATA_FETCH_COMPLETE.name())) {
 				nasaSpaceWeatherGUI.getFlag(7).setForeground(nasaMonitor.get(7).getFlagTextColor());
@@ -474,18 +474,7 @@ public class NASASpaceWeatherProcessor implements AutoCloseable {
 	@Override
 	public void close() {
 		nasaMonitor.stream().filter(Objects::nonNull).forEach(AbstractNasaMonitor::close);
-		if (startScheduler != null) {
-			try {
-				LOG.log(Level.SEVERE, "Initializing AbstractNASAMonitor.secondScheduler service termination....");
-				startScheduler.shutdown();
-				startScheduler.awaitTermination(TERMINATE_TIMEOUT, TimeUnit.SECONDS);
-				LOG.log(Level.SEVERE, "NASASpaceWeatherProcessor.startScheduler service has gracefully terminated");
-			} catch (InterruptedException _) {
-				startScheduler.shutdownNow();
-				LOG.log(Level.SEVERE, "NASASpaceWeatherProcessor.startScheduler service has timed out after {0} seconds of waiting to terminate processes.", TERMINATE_TIMEOUT);
-				Thread.currentThread().interrupt();
-			}
-		}
+		startMonitorIndex = nasaMonitor.size();
 	}
 	
 	public PropertyChangeSupport getPropertyChangeSupport() {

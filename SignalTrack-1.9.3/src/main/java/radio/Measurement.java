@@ -254,11 +254,12 @@ public class Measurement implements Serializable {
 
 	@Override
 	public boolean equals(Object obj) {
-		if (this == obj)
+		if (this == obj) {
 			return true;
-		if (!(obj instanceof Measurement))
+		}
+		if (!(obj instanceof Measurement other)) {
 			return false;
-		Measurement other = (Measurement) obj;
+		}
 		return bandwidthHz == other.bandwidthHz && Objects.equals(ber, other.ber)
 				&& Objects.equals(channelNumber, other.channelNumber) && colorCode == other.colorCode
 				&& Objects.equals(dBm, other.dBm) && Objects.equals(dplCode, other.dplCode)

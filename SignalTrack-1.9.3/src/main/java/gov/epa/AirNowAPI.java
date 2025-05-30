@@ -103,10 +103,10 @@ public class AirNowAPI implements AutoCloseable {
     public static final String DEFAULT_FEED_SOURCE = "https://feeds.airnowapi.org/rss/realtime/nnn.xml";
     public static final String DEFAULT_LOCATION_CODE = "29"; // Columbus, Ohio
     public static final boolean DEFAULT_DEBUG_MODE = true;
-    public static final long DEFAULT_INITIAL_WAIT = 3;     // seconds
-    public static final long DEFULT_UPDATE_RATE = 60;    // seconds
+    public static final long DEFAULT_INITIAL_WAIT = 15;     // seconds
+    public static final long DEFULT_UPDATE_RATE = 300;    // seconds
     public static final Logger LOG = Logger.getLogger(AirNowAPI.class.getName());
-    public static final long DEFAULT_FAIL_TIMEOUT_SECONDS = 120;
+    public static final long DEFAULT_FAIL_TIMEOUT_SECONDS = 360;
     
     private Locale locale = Locale.getDefault();
     
@@ -143,7 +143,7 @@ public class AirNowAPI implements AutoCloseable {
     }
 
     public AirNowAPI(double latitude, double longitude, boolean debug) {
-        this(getLocationCode(latitude, longitude).getLocationCode(), debug);
+        this(getLocationCodeElement(latitude, longitude).getLocationCode(), debug);
     }
 
     public AirNowAPI(String locationCode, boolean debug) {
@@ -296,7 +296,7 @@ public class AirNowAPI implements AutoCloseable {
 	                    "\n-------------------- END EPA AirNowAPI --------------------"
 	                });
 	            }
-        	} catch (NullPointerException ex) {
+        	} catch (NullPointerException _) {
         		if (debug) {
                     LOG.log(Level.INFO, "**** AirNowAPI URL is Invalid ****");
                 }
@@ -415,7 +415,7 @@ public class AirNowAPI implements AutoCloseable {
         private URL getFeedSourceURL(String feedSource, String locationCode) {
             try {
                 return new URI(feedSource.replace("nnn", locationCode)).toURL();
-            } catch (MalformedURLException e) {
+            } catch (MalformedURLException _) {
                 LOG.log(Level.WARNING, "Error Retrieving FeedSource URL: {0}", feedSource);
                 pcs.firePropertyChange(Event.NETWORK_ERROR.name(), null, "Error Retrieving: " + feedSource);
             } catch (URISyntaxException e) {
@@ -498,7 +498,7 @@ public class AirNowAPI implements AutoCloseable {
 				scheduler.shutdown();
 				scheduler.awaitTermination(5, TimeUnit.SECONDS);
 				LOG.log(Level.INFO, "AirNowAPI.scheduler service has gracefully terminated");
-			} catch (InterruptedException e) {
+			} catch (InterruptedException _) {
 				scheduler.shutdownNow();
 				LOG.log(Level.SEVERE, "AirNowAPI.scheduler request for shutdown has timed out after 5 seconds of waiting to terminate processes.");
 				Thread.currentThread().interrupt();
@@ -620,7 +620,7 @@ public class AirNowAPI implements AutoCloseable {
     	airNowLocationCodeSet.add(new AirNowLocationCode("150", 39.466703, -87.413909, "Tarra Haute", "IN"));
     }
     
-    private static AirNowLocationCode getLocationCode(double latitude, double longitude) {
+    private static AirNowLocationCode getLocationCodeElement(double latitude, double longitude) {
     	loadDefaultLocationCodes();
     	double distance = Double.MAX_VALUE;
     	int y = 0;

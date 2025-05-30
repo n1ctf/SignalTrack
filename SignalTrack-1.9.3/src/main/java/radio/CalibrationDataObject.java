@@ -69,7 +69,7 @@ public class CalibrationDataObject implements AutoCloseable {
     private double noiseFloor;
     private double saturation;
     
-    private File calFile;
+    private final File calFile;
     private AbstractRadioReceiver radio;
     private final Semaphore semaphore = new Semaphore(1);
     
@@ -163,7 +163,7 @@ public class CalibrationDataObject implements AutoCloseable {
                 String inputString;
                 while (raf.getFilePointer() < raf.length()) {
                     inputString = raf.readLine();
-                    if (inputString.length() > 0) {
+                    if (!inputString.isEmpty()) {
                         final String[] stringArray = inputString.split("=");
                         if (i <= 9) {
                             success = stringArray[0].contentEquals(DataString.values()[i].name()); // test for correct field name
@@ -453,8 +453,9 @@ public class CalibrationDataObject implements AutoCloseable {
     }
 
     public void save() {
-    	ExecutorService executor = Executors.newSingleThreadExecutor();
+    	try (ExecutorService executor = Executors.newSingleThreadExecutor()) {
     		executor.execute(new SaveCalFile());
+    	}
     }
 
     private final class SaveCalFile implements Runnable {
@@ -504,7 +505,7 @@ public class CalibrationDataObject implements AutoCloseable {
 	// This method creates a dummy calFile record on the file system for new installs, and returns a File() instance of it, 
 	// to avoid null pointer exceptions.
 	public static File createDefaultCalibrationFile() {
-		AbstractRadioReceiver radio = AbstractRadioReceiver.getRadioInstance(AbstractRadioReceiver.getRadioCatalog()[0]);
+		final AbstractRadioReceiver radio = AbstractRadioReceiver.getRadioInstance(AbstractRadioReceiver.getRadioCatalog()[0]);
 		return radio.getCalFile();
 	}
     

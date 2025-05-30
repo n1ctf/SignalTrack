@@ -18,7 +18,7 @@ import java.io.IOException;
 
 public class Sinad implements Runnable {
 
-    private List<SinadListener> _listeners = new ArrayList<>();
+    private final List<SinadListener> _listeners = new ArrayList<>();
 
     private static final int EXTERNAL_BUFFER_SIZE = 1152;
     private static final int AVERAGING_FACTOR = 200;
@@ -132,14 +132,8 @@ public class Sinad implements Runnable {
                     b2 += 0x100;
                 }
 
-                int value;
+                final int value = !isBigEndian ? (b1 << 8) + b2 : b1 + (b2 << 8);
 
-                // Store the data based on the original Endian encoding format
-                if (!isBigEndian) {
-                    value = (b1 << 8) + b2;
-                } else {
-                    value = b1 + (b2 << 8);
-                }
                 x[i / 2] = value;
             }
 
@@ -187,7 +181,7 @@ public class Sinad implements Runnable {
             sndi = 0;
             ndi = 0;
             si = 0;
-            double sinad = Math.max(20.0 * Math.log10(m_snd / m_nd), 0);
+            final double sinad = Math.max(20.0 * Math.log10(m_snd / m_nd), 0);
             if (avg < AVERAGING_FACTOR) {
                 sinadAvg += sinad;
                 avg++;
@@ -211,8 +205,8 @@ public class Sinad implements Runnable {
     }
 
     private synchronized void fireSinadChangedEvent() {
-        SinadEvent sinadEvent = new SinadEvent(this, m_sinadFinal);
-        Iterator<SinadListener> listeners = _listeners.iterator();
+    	final SinadEvent sinadEvent = new SinadEvent(this, m_sinadFinal);
+    	final Iterator<SinadListener> listeners = _listeners.iterator();
         while (listeners.hasNext()) {
             (listeners.next()).sinadChanged(sinadEvent);
         }
