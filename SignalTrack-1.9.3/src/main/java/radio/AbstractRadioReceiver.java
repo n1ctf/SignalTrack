@@ -814,11 +814,11 @@ public abstract class AbstractRadioReceiver implements ReceiverInterface, AutoCl
 		return cdo;
 	}
 
-	public void setFrequency(String freqStr) {
-		setFrequency(Double.parseDouble(freqStr));
+	public void setFrequencyMHz(String freqStr) {
+		setFrequencyMHz(Double.parseDouble(freqStr));
 	}
 
-	public void setFrequency(double frequency) {
+	public void setFrequencyMHz(double frequency) {
 		this.frequency = frequency;
 	}
 
@@ -1135,7 +1135,7 @@ public abstract class AbstractRadioReceiver implements ReceiverInterface, AutoCl
 		setSquelchMode(scanElement.getSquelchMode());
 		setModeName(scanElement.getModeName());
 		setFilterHz(scanElement.getBandwidthHz());
-		setFrequency(scanElement.getFrequency());
+		setFrequencyMHz(scanElement.getFrequency());
 			
 		m = Measurement.copy(scanElement);
 		

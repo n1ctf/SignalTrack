@@ -140,7 +140,7 @@ public class RTLSDR_TCP_Client extends AbstractRadioReceiver implements AutoClos
 		this.netParams = netParams;
 	}
 	
-	public void setFrequency(double freqMHz) {
+	public void setFrequencyMHz(double freqMHz) {
 		
 	}
 	

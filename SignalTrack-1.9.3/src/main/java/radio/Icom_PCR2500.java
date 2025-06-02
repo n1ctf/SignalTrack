@@ -855,18 +855,18 @@ public class Icom_PCR2500 extends AbstractRadioReceiver implements TeletypeInter
     }
 
     @Override
-    public void setFrequency(String frequency) {
+    public void setFrequencyMHz(String frequency) {
         try {
-            setFrequency(Double.parseDouble(frequency));
+            setFrequencyMHz(Double.parseDouble(frequency));
         } catch (NumberFormatException ex) {
-            setFrequency(0.0);
+            setFrequencyMHz(0.0);
             LOG.log(Level.WARNING, ex.getMessage());
             getReceiverEvent().firePropertyChange(ReceiverEvent.EXCEPTION, null, ex);
         }
     }
 
     @Override
-    public void setFrequency(double frequency) {
+    public void setFrequencyMHz(double frequency) {
         this.frequency = frequency;
         setFrequencyModeFilter(frequency, getModeName(), getFilterHz());
     }

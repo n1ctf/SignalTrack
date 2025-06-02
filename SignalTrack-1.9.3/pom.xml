@@ -269,13 +269,6 @@
 			<version>2.0.16</version>
 		</dependency>
 		<dependency>
-			<groupId>jparsec</groupId>
-			<artifactId>jparsec</artifactId>
-			<version>1.0</version>
-			<scope>system</scope>
-			<systemPath>${jparsec-systemPath}</systemPath>
-		</dependency>
-		<dependency>
 			<groupId>net.java.dev.jna</groupId>
 			<artifactId>jna-platform</artifactId>
 			<version>5.16.0</version>
@@ -300,5 +293,10 @@
     		<artifactId>coordinates2country</artifactId>
     		<version>1.9</version>
 		</dependency>
+		<dependency>
+            <groupId>pl.edu.icm</groupId>
+            <artifactId>JLargeArrays</artifactId>
+            <version>1.5</version>
+        </dependency>
 	</dependencies>
 </project>

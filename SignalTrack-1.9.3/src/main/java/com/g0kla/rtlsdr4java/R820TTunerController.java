@@ -562,6 +562,7 @@ public class R820TTunerController extends RTL2832TunerController {
 			mSetting = setting;
 		}
 
+		@Override
 		public String toString() {
 			return mLabel;
 		}
@@ -614,6 +615,7 @@ public class R820TTunerController extends RTL2832TunerController {
 			mSetting = setting;
 		}
 
+		@Override
 		public String toString() {
 			return mLabel;
 		}
@@ -672,6 +674,7 @@ public class R820TTunerController extends RTL2832TunerController {
 			mMixerGain = mixer;
 		}
 
+		@Override
 		public String toString() {
 			return mLabel;
 		}

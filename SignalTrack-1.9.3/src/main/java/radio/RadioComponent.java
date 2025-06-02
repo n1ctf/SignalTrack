@@ -218,7 +218,7 @@ public class RadioComponent extends JDialog {
         }
 
         if (!jftfFreq.getText().isBlank()) {
-            abstractRadioReceiver.setFrequency(Double.parseDouble(jftfFreq.getText()));
+            abstractRadioReceiver.setFrequencyMHz(Double.parseDouble(jftfFreq.getText()));
         }
 
         abstractRadioReceiver.setSquelchMode(AccessMode.valueOf(((String) jcboSquelchMode.getSelectedItem()).trim()));
@@ -848,7 +848,7 @@ public class RadioComponent extends JDialog {
             robot.mousePress(InputEvent.BUTTON1_DOWN_MASK);
     	} catch (AWTException e) {
 			LOG.log(Level.WARNING, "Component {0} must be showing on the screen to be automated.", comp.getName());
-		} catch (IllegalComponentStateException ex) {
+		} catch (IllegalComponentStateException _) {
 			LOG.log(Level.WARNING, "Component {0} must be showing on the screen to determine its location.", comp.getName());
 		}
     }

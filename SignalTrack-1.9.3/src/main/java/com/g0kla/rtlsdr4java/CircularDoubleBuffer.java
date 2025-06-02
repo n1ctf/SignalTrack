@@ -1,4 +1,4 @@
-package radio;
+package com.g0kla.rtlsdr4java;
 
 public class CircularDoubleBuffer {
 	double[] doubles;

@@ -376,7 +376,7 @@ public class Yaesu_FT857D extends AbstractRadioReceiver implements TeletypeInter
 	}
 
 	@Override
-	public void setFrequency(double freqMhz) {
+	public void setFrequencyMHz(double freqMhz) {
 		int[] data = new int[5];
 		long freqHz = (long) (freqMhz * 1E5);
 		byte[] bcd = Utility.toBCDArray(freqHz, 8);

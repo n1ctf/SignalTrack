@@ -33,7 +33,7 @@ public abstract class TunerController {
 	
 	public String name;
 
-	public TunerController(String name, long min, long max) {
+	protected TunerController(String name, long min, long max) {
 		this.name = name;
 		MIN_FREQ = min;
 		MAX_FREQ = max;

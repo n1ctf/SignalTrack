@@ -17,38 +17,31 @@
  ******************************************************************************/
 package com.g0kla.rtlsdr4java;
 
-public class FloatAveragingBuffer
-{
-	private float[] mBuffer;
+public class FloatAveragingBuffer {
+	private final float[] mBuffer;
 	private float mAverage = 0.0f;
-	private int mBufferSize;
+	private final int mBufferSize;
 	private int mBufferPointer;
-	
-	public FloatAveragingBuffer( int size )
-	{
+
+	public FloatAveragingBuffer(int size) {
 		mBufferSize = size;
-		mBuffer = new float[ size ];
+		mBuffer = new float[size];
 	}
-	
-	public float get( float newValue )
-	{
-		float oldValue = mBuffer[ mBufferPointer ];
 
-		if( Float.isInfinite( newValue ) || Float.isNaN( newValue ) )
-		{
-			mAverage = mAverage - ( oldValue / mBufferSize );
+	public float get(float newValue) {
+		final float oldValue = mBuffer[mBufferPointer];
 
-			mBuffer[ mBufferPointer++ ] = 0.0f;
-		}
-		else
-		{
-			mAverage = mAverage - ( oldValue / mBufferSize ) + ( newValue / mBufferSize );
+		if (Float.isInfinite(newValue) || Float.isNaN(newValue)) {
+			mAverage -= (oldValue / mBufferSize);
 
-			mBuffer[ mBufferPointer++ ] = newValue;
+			mBuffer[mBufferPointer++] = 0.0f;
+		} else {
+			mAverage = mAverage - (oldValue / mBufferSize) + (newValue / mBufferSize);
+
+			mBuffer[mBufferPointer++] = newValue;
 		}
 
-		if( mBufferPointer >= mBufferSize )
-		{
+		if (mBufferPointer >= mBufferSize) {
 			mBufferPointer = 0;
 		}
 

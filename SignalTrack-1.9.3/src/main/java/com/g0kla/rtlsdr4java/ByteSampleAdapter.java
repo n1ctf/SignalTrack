@@ -28,7 +28,7 @@ public class ByteSampleAdapter implements ISampleAdapter {
 		LOOKUP_VALUES = new float[256];
 
 		for (int x = 0; x < 256; x++) {
-			LOOKUP_VALUES[x] = (float) (x - 127) / 128.0f;
+			LOOKUP_VALUES[x] = (x - 127) / 128.0f;
 		}
 	}
 

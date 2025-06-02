@@ -1,7 +1,4 @@
-package radio;
-
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
+package com.g0kla.rtlsdr4java;
 
 public abstract class Source {
 	protected final CircularDoubleBuffer buffer;
@@ -19,8 +16,7 @@ public abstract class Source {
 
 		for (int i = 0; i < readBuffer.length / step; i++) {// 4 bytes for each sample. 2 in each stereo channel.
 			final byte[] ab = { readBuffer[step * i], readBuffer[step * i + 1] };
-			// double value = Tools.littleEndian2(ab, 16);
-			double value = ByteBuffer.wrap(ab).order(ByteOrder.LITTLE_ENDIAN).getDouble();
+			double value = Tools.littleEndian2(ab, 16);
 			value /= 32768.0;
 			buffer.add(value);
 		}

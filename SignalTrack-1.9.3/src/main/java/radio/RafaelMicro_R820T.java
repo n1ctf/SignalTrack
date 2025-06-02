@@ -1,5 +1,8 @@
 package radio;
 
+import java.awt.EventQueue;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -16,12 +19,14 @@ import com.g0kla.rtlsdr4java.DeviceException;
 import com.g0kla.rtlsdr4java.Listener;
 import com.g0kla.rtlsdr4java.R820TTunerController;
 import com.g0kla.rtlsdr4java.RTL2832TunerController;
+import com.g0kla.rtlsdr4java.Source;
 import com.g0kla.rtlsdr4java.RTL2832TunerController.SampleRate;
 
 import com.g0kla.rtlsdr4java.TunerType;
 
 public class RafaelMicro_R820T extends AbstractRadioReceiver {
-
+	private static final long serialVersionUID = 8250966856595400820L;
+	
 	private static final Logger LOG = Logger.getLogger(RafaelMicro_R820T.class.getName());
 
 	private R820TTunerController rtl = null;
@@ -33,7 +38,12 @@ public class RafaelMicro_R820T extends AbstractRadioReceiver {
     public static final String SOFTWARE_VERSION = "1.0";
     public static final String HARDWARE_VERSION = "1.0";
 
+    public static final short DEFAULT_VENDOR_ID = (short) 0x0bda;
+    public static final short DEFAULT_PRODUCT_ID = (short) 0x2838;
+    public static final int DEFAULT_SAMPLE_RATE = 240000;
+    
     public static final double DEFAULT_REFERENCE_IMPEDANCE = 50.0;
+    public static final boolean DEFAULT_DEBUG = true;
     
     private static final boolean SUPPORTS_SINAD = false;
 	private static final boolean SUPPORTS_BER = false;
@@ -73,17 +83,29 @@ public class RafaelMicro_R820T extends AbstractRadioReceiver {
 	private float i;
 	private float q;
 	
+	private double frequencyMHz;
+	
+	private boolean debug = DEFAULT_DEBUG;
+	
+	private short vendorId;
+	private short productId;
+	private int sampleRate;
+	
+	private final ExecutorService executor = Executors.newCachedThreadPool();
+	
 	private static final StandardModeName[] SUPPORTED_MODES = { 
 		StandardModeName.IQ
 	};
 
 	public RafaelMicro_R820T() {
-		this((short) 0x0bda, (short) 0x2838, 240000);
+		this(DEFAULT_VENDOR_ID, DEFAULT_PRODUCT_ID, DEFAULT_SAMPLE_RATE);
 	}
 
 	public RafaelMicro_R820T(short vendorId, short productId, int sampleRate) {
-		final int result = LibUsb.init(null);
-
+		this.vendorId = vendorId;
+		this.productId = productId;
+		this.sampleRate = sampleRate;
+		
 		Runtime.getRuntime().addShutdownHook(new Thread() {
 			@Override
 			public void run() {
@@ -91,17 +113,8 @@ public class RafaelMicro_R820T extends AbstractRadioReceiver {
 			}
 		});
 		
-		if (result == LibUsb.SUCCESS) {
-			rtl = findDevice(vendorId, productId, sampleRate);
-
-			final RtlSource rtlDataListener = new RtlSource(240000);
-
-			addListener(rtlDataListener);
-
-		} else {
-			LOG.log(Level.WARNING, "LibUsb failed to initialize");
-		}
-
+		startRadio();
+		setFrequencyMHz(400.000);
 	}
 
 	public R820TTunerController getR820T() {
@@ -110,53 +123,6 @@ public class RafaelMicro_R820T extends AbstractRadioReceiver {
 
 	public void addListener(Listener<ComplexBuffer> listener) {
 		rtl.addListener(listener);
-	}
-
-	private R820TTunerController findDevice(short vendorId, short productId, int sampleRate) {
-		R820TTunerController r820t = null;
-
-		final DeviceList deviceList = new DeviceList();
-
-		int result = LibUsb.getDeviceList(null, deviceList);
-
-		if (result < 0) {
-			throw new LibUsbException("Unable to get device list", result);
-		}
-
-		try {
-			// Iterate over all devices and scan for the right one
-			for (Device device : deviceList) {
-				final DeviceDescriptor descriptor = new DeviceDescriptor();
-
-				result = LibUsb.getDeviceDescriptor(device, descriptor);
-
-				if (result != LibUsb.SUCCESS) {
-					throw new LibUsbException("Unable to read device descriptor", result);
-				}
-
-				if (descriptor.idVendor() == vendorId && descriptor.idProduct() == productId) {
-					LOG.log(Level.INFO, "Device Descriptor: {0}", descriptor);
-
-					TunerType tunerType = TunerType.UNKNOWN;
-					tunerType = RTL2832TunerController.identifyTunerType(device);
-					LOG.log(Level.INFO, "Found Tuner: {0}", tunerType);
-
-					r820t = new R820TTunerController(device, descriptor);
-
-					r820t.init(SampleRate.getClosest(sampleRate));
-
-					break;
-				}
-			}
-		} catch (DeviceException ex) {
-			LOG.log(Level.WARNING, ex.getLocalizedMessage());
-		} finally {
-			// Ensure the allocated device list is freed
-			// Note don't free the list before we have opened the device that we want,
-			// otherwise it fails
-			LibUsb.freeDeviceList(deviceList, true);
-		}
-		return r820t;
 	}
 
 	public class RtlSource extends Source implements Listener<ComplexBuffer> {
@@ -171,20 +137,22 @@ public class RafaelMicro_R820T extends AbstractRadioReceiver {
 			if (iqBuffer.length >= 2) {
 				i = iqBuffer[0];
 				q = iqBuffer[1];
-				System.out.println("Got samples:" + iqBuffer[0] + " " + iqBuffer[1] + " " + getdBm() + " " + getRSSI());
+				if (debug) {
+					LOG.log(Level.INFO, "I: {0} Q: {1} dBm: {2} RSSI: {3}", new Object[] {iqBuffer[0], iqBuffer[1], getdBm(), getRSSI()});
+				}
 			}
 			for (float f : iqBuffer) {
-				// buffer.add(f);
+				buffer.add(f);
 			}
 		}
 	}
 
 	@Override
 	public int getRSSI() {
-		final double dynamicRange = Math.abs(DEFAULT_NOISE_FLOOR - DEFAULT_SATURATION); 					// = -135 - -21 = -135 + 21 = -114
-		final double rssiRangeMagnitude = Math.abs(RSSI_UPPER_LIMIT - RSSI_LOWER_LIMIT + 1D);				// = 255 - 0 + 1 = 256
-		final double rssiPerdBm = rssiRangeMagnitude / dynamicRange;										// = 256 / 114 = 2.245614	
-		return (RSSI_UPPER_LIMIT + 1) - ((int) (Math.round(getdBm() - DEFAULT_SATURATION) * rssiPerdBm)); 
+		final double dynamicRange = Math.abs(DEFAULT_NOISE_FLOOR - DEFAULT_SATURATION); 		// = -135 - -21 = -135 + 21 = -114
+		final double rssiRangeMagnitude = Math.abs(RSSI_UPPER_LIMIT - RSSI_LOWER_LIMIT + 1D);	// = 255 - 0 + 1 = 256
+		final double rssiPerdBm = rssiRangeMagnitude / dynamicRange;							// = 256 / 114 = 2.245614	
+		return (int) (Math.round(getdBm() - DEFAULT_SATURATION) * rssiPerdBm); 
 	}
 	
 	// Let's say you have I = 0.5 and Q = 1.0, and your system has a reference impedance of 50 Ohms. 
@@ -202,7 +170,7 @@ public class RafaelMicro_R820T extends AbstractRadioReceiver {
 	}
 	
 	public static double getdBm(double i, double q, double impedanceOhms) {
-		final double magnitude = Math.sqrt((i*i) + (q*q));
+		final double magnitude = Math.abs(Math.sqrt((i*i) + (q*q)));
 		final double watts = (magnitude*magnitude) / impedanceOhms;
 		return 10 * Math.log10(watts) + 30;
 	}
@@ -389,53 +357,154 @@ public class RafaelMicro_R820T extends AbstractRadioReceiver {
 
 	@Override
 	public long getVersionUID() {
-		// TODO Auto-generated method stub
-		return 0;
+		return serialVersionUID;
 	}
 
 	@Override
 	public String getInterfaceName() {
-		// TODO Auto-generated method stub
-		return null;
+		return "Universal Serial Bus";
 	}
 
 	@Override
 	public JPanel[] getConfigurationComponentArray() {
 		// TODO Auto-generated method stub
-		return null;
+		return new JPanel[0];
 	}
 
 	@Override
 	public void stopRadio() {
-		try {
-			if (rtl != null) {
-				rtl.release();
-			}
-		} catch (DeviceException ex) {
-			LOG.log(Level.WARNING, ex.getLocalizedMessage());
-		}
+		executor.execute(new StopRadio());
 	}
 
+	private class StopRadio implements Runnable {
+		@Override
+		public void run() {
+			try {
+				if (rtl != null) {
+					rtl.release();
+				}
+			} catch (DeviceException ex) {
+				LOG.log(Level.WARNING, ex.getLocalizedMessage());
+			}
+		}
+	}
+	
 	@Override
 	public boolean isConnected() {
-		// TODO Auto-generated method stub
-		return false;
+		return rtl != null;
 	}
 
 	@Override
 	public void startRadio() {
-		// TODO Auto-generated method stub
-		
+		executor.execute(new RTLSDR(vendorId, productId, sampleRate));
 	}
 	
-	public static void main(String[] args) {
-		int sampleRate = 240000;
-		
-		try (RafaelMicro_R820T test = new RafaelMicro_R820T((short)0x0bda, (short)0x2838, sampleRate)) {
-			while(true);
-		} 
+	@Override
+	public void setFrequencyMHz(double frequency) {
+		this.frequencyMHz = frequency;
+		try {
+			if (rtl != null) {
+				rtl.setTunedFrequency((long) (frequencyMHz * 10E6));
+			}
+		} catch (DeviceException ex) {
+			LOG.log(Level.WARNING, "Device Exception", ex);
+		}
+	}
 	
+	private class RTLSDR implements Runnable {
+		private final short vendorId;
+		private final short productId;
+		private final SampleRate sampleRate;
+		
+		private RTLSDR(short vendorId, short productId, int sampleRate) {
+			this(vendorId, productId, SampleRate.getClosest(sampleRate));
+		}
 
+		private RTLSDR(short vendorId, short productId, SampleRate sampleRate) {
+			this.vendorId = vendorId;
+			this.productId = productId;
+			this.sampleRate = sampleRate;
+		}
+		
+		@Override
+		public void run() {
+			try {
+				final int result = LibUsb.init(null);
+				
+				if (result == LibUsb.SUCCESS) {
+					rtl = findDevice(vendorId, productId, sampleRate);
+					
+					if (rtl != null) {
+						rtl.setTunedFrequency((long) (frequencyMHz * 10E6));
+		
+						final RtlSource rtlDataListener = new RtlSource(sampleRate.getRate() * 5);
+		
+						addListener(rtlDataListener);
+					} else {
+						LOG.log(Level.WARNING, "LibUsb failed to initialize");
+					}
+				} else {
+					LOG.log(Level.WARNING, "LibUsb failed to initialize");
+				}
+			} catch (DeviceException ex) {
+				LOG.log(Level.WARNING, "Device Exception", ex);
+			}
+		}
+		
+		private R820TTunerController findDevice(short vendorId, short productId, SampleRate sampleRate) {
+			R820TTunerController r820t = null;
+
+			final DeviceList deviceList = new DeviceList();
+
+			int result = LibUsb.getDeviceList(null, deviceList);
+
+			if (result < 0) {
+				throw new LibUsbException("Unable to get device list", result);
+			}
+
+			try {
+				// Iterate over all devices and scan for the right one
+				for (Device device : deviceList) {
+					final DeviceDescriptor descriptor = new DeviceDescriptor();
+
+					result = LibUsb.getDeviceDescriptor(device, descriptor);
+
+					if (result != LibUsb.SUCCESS) {
+						throw new LibUsbException("Unable to read device descriptor", result);
+					}
+
+					if (descriptor.idVendor() == vendorId && descriptor.idProduct() == productId) {
+						LOG.log(Level.INFO, "Device Descriptor: {0}", descriptor);
+
+						TunerType tunerType = TunerType.UNKNOWN;
+						tunerType = RTL2832TunerController.identifyTunerType(device);
+						LOG.log(Level.INFO, "Found Tuner: {0}", tunerType);
+
+						r820t = new R820TTunerController(device, descriptor);
+
+						r820t.init(sampleRate);
+
+						break;
+					}
+				}
+			} catch (DeviceException ex) {
+				LOG.log(Level.WARNING, ex.getLocalizedMessage());
+			} finally {
+				// Ensure the allocated device list is freed
+				// Note don't free the list before we have opened the device that we want,
+				// otherwise it fails
+				LibUsb.freeDeviceList(deviceList, true);
+			}
+			return r820t;
+		}
+	}
+	
+	public void setDebug(boolean debug) {
+		this.debug = debug;
+	}
+
+	public static void main(String[] args) {
+		EventQueue.invokeLater(RafaelMicro_R820T::new);
 	}
 
 }

@@ -469,18 +469,18 @@ public class Rigctl extends AbstractRadioReceiver implements TeletypeInterface {
     }
 
     @Override
-    public void setFrequency(String freqStr) {
+    public void setFrequencyMHz(String freqStr) {
         try {
-            setFrequency(Double.parseDouble(freqStr));
+            setFrequencyMHz(Double.parseDouble(freqStr));
         } catch (NumberFormatException ex) {
-            setFrequency(0.0);
+            setFrequencyMHz(0.0);
             getReceiverEvent().firePropertyChange(ReceiverEvent.EXCEPTION, null, ex);
             LOG.log(Level.WARNING, "NumberFormatException", ex);
         }
     }
 
     @Override
-    public void setFrequency(double frequency) {
+    public void setFrequencyMHz(double frequency) {
         this.frequency = frequency;
         freqChangeConfirmed = false;
         String f = new DecimalFormat("##########").format(frequency * 1E6);

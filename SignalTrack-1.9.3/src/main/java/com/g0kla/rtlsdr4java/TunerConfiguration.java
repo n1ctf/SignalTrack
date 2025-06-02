@@ -18,15 +18,14 @@
 package com.g0kla.rtlsdr4java;
 
 //import javax.xml.bind.annotation.XmlAttribute;
-//import javax.xml.bind.annotation.XmlType;
 
+//import javax.xml.bind.annotation.XmlType;
 
 /**
  * Abstract class to hold a named configuration for a specific type of tuner
  */
 //@XmlType( name = "tuner_configuration" )
-public abstract class TunerConfiguration
-{
+public abstract class TunerConfiguration {
 	protected String mName;
 	protected String mUniqueID;
 	protected boolean mAssigned;
@@ -35,68 +34,57 @@ public abstract class TunerConfiguration
 	/**
 	 * Default constructor to support JAXB
 	 */
-	public TunerConfiguration()
-	{
-	}
-	
+	protected TunerConfiguration() {}
+
 	/**
 	 * Normal constructor
 	 */
-	public TunerConfiguration( String uniqueID, String name )
-	{
+	protected TunerConfiguration(String uniqueID, String name) {
 		mUniqueID = uniqueID;
 		mName = name;
 	}
-	
-	public String toString()
-	{
+
+	@Override
+	public String toString() {
 		return mName;
 	}
 
 //	@XmlAttribute( name = "name" )
-	public String getName()
-	{
+	public String getName() {
 		return mName;
 	}
-	
-	public void setName( String name )
-	{
+
+	public void setName(String name) {
 		mName = name;
 	}
 
 //	@XmlAttribute( name = "unique_id" )
-	public String getUniqueID()
-	{
+	public String getUniqueID() {
 		return mUniqueID;
 	}
-	
-	public void setUniqueID( String id )
-	{
-		mUniqueID = id;;
+
+	public void setUniqueID(String id) {
+		mUniqueID = id;
 	}
-	
+
 //	@XmlAttribute( name = "assigned" )
-	public boolean isAssigned()
-	{
+	public boolean isAssigned() {
 		return mAssigned;
 	}
-	
-	public void setAssigned( boolean assigned )
-	{
+
+	public void setAssigned(boolean assigned) {
 		mAssigned = assigned;
 	}
-	
+
 //	@XmlAttribute( name = "frequency" )
-	public long getFrequency()
-	{
+	public long getFrequency() {
 		return mFrequency;
 	}
-	
-	public void setFrequency( long frequency )
-	{
+
+	public void setFrequency(long frequency) {
 		mFrequency = frequency;
 	}
-	
+
 //	@XmlAttribute( name = "tuner_type" )
 	public abstract TunerType getTunerType();
 }

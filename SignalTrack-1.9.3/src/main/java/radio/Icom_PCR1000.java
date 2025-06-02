@@ -204,7 +204,7 @@ public class Icom_PCR1000 extends AbstractRadioReceiver implements TeletypeInter
 	private volatile boolean terminated;
 	private volatile boolean allowQueueing;
 
-	private AbstractTeletypeController tty = 
+	private final AbstractTeletypeController tty = 
 	    AbstractTeletypeController.getTTyPortInstance(AbstractTeletypeController.getCatalogMap().getKey("JSSC TTY Port v2.9.5"), false);
 	
 	private PropertyChangeListener serialPortPropertyChangeListener;
@@ -227,7 +227,7 @@ public class Icom_PCR1000 extends AbstractRadioReceiver implements TeletypeInter
 			if (TTYEvents.RX_CHAR.name().equals(event.getPropertyName())) {
 				try {
 					String data = null;
-					StringBuilder sb = new StringBuilder();
+					final StringBuilder sb = new StringBuilder();
 					int len;
 					do {
 						readBuffer = tty.readBytes();
@@ -759,17 +759,17 @@ public class Icom_PCR1000 extends AbstractRadioReceiver implements TeletypeInter
 	}
 
 	@Override
-	public void setFrequency(String freqStr) {
+	public void setFrequencyMHz(String freqStr) {
 		try {
-			setFrequency(Double.parseDouble(freqStr));
+			setFrequencyMHz(Double.parseDouble(freqStr));
 		} catch (NumberFormatException ex) {
-			setFrequency(0.0);
+			setFrequencyMHz(0.0);
 			receiverEvent.firePropertyChange(ReceiverEvent.EXCEPTION, null, ex);
 		}
 	}
 
 	@Override
-	public void setFrequency(double frequency) {
+	public void setFrequencyMHz(double frequency) {
 		setFrequencyModeFilter(frequency, modeName, filterHz);
 	}
 

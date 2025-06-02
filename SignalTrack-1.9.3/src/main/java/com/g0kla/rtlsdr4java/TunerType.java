@@ -17,32 +17,29 @@
  ******************************************************************************/
 package com.g0kla.rtlsdr4java;
 
-public enum TunerType
-{
-	AIRSPY_R820T( "Airspy R820T" ),
-	ELONICS_E4000( "E4000" ),
-	ETTUS_WBX( "WBX" ),
-	ETTUS_VARIOUS( "Ettus Tuner" ),
-	FCI_FC2580( "FC2580" ),
-	FITIPOWER_FC0012( "FC0012" ),
-	FITIPOWER_FC0013( "FC0013" ),
-	FUNCUBE_DONGLE_PRO( "Funcube Dongle Pro" ),
-	FUNCUBE_DONGLE_PRO_PLUS( "Funcube Dongle Pro Plus" ),
-	HACKRF( "HackRF" ),
-	RAFAELMICRO_R820T( "R820T" ),
-	RAFAELMICRO_R828D( "R828D" ),
-	RTL2832_VARIOUS( "Generic" ),
-	UNKNOWN( "Unknown" );
-	
+public enum TunerType {
+	AIRSPY_R820T("Airspy R820T"), 
+	ELONICS_E4000("E4000"), 
+	ETTUS_WBX("WBX"), 
+	ETTUS_VARIOUS("Ettus Tuner"),
+	FCI_FC2580("FC2580"), 
+	FITIPOWER_FC0012("FC0012"), 
+	FITIPOWER_FC0013("FC0013"),
+	FUNCUBE_DONGLE_PRO("Funcube Dongle Pro"), 
+	FUNCUBE_DONGLE_PRO_PLUS("Funcube Dongle Pro Plus"), 
+	HACKRF("HackRF"),
+	RAFAELMICRO_R820T("R820T"), 
+	RAFAELMICRO_R828D("R828D"), 
+	RTL2832_VARIOUS("Generic"), 
+	UNKNOWN("Unknown");
+
 	private String mLabel;
-	
-	private TunerType( String label )
-	{
+
+	private TunerType(String label) {
 		mLabel = label;
 	}
-	
-	public String getLabel()
-	{
+
+	public String getLabel() {
 		return mLabel;
 	}
 }
